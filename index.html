@@ -640,18 +640,23 @@ let syncTimeout=null;
 let isLoadingFromCloud=false;
 
 // שמור ל-Firebase — שומר כ-JSON string כדי לעקוף מגבלות Firestore
+let isSavingToCloud=false;
 function saveToCloud(){
   if(syncTimeout)clearTimeout(syncTimeout);
   syncTimeout=setTimeout(async()=>{
     try{
-      const payload={ data: JSON.stringify(DB), updated: Date.now() };
+      isSavingToCloud=true;
+      DB._ts=Date.now();
+      const payload={ data: JSON.stringify(DB), updated: DB._ts };
       await DOC_REF.set(payload);
       showSyncStatus('☁️ נשמר');
     }catch(e){
       showSyncStatus('⚠️ '+e.message);
       console.error('Firebase save error:',e);
+    }finally{
+      setTimeout(()=>{isSavingToCloud=false;},2000);
     }
-  },1000);
+  },800);
 }
 
 // טען מ-Firebase בכניסה
@@ -684,13 +689,15 @@ async function loadFromCloud(){
     
     // האזן לשינויים בזמן אמת
     DOC_REF.onSnapshot(snap=>{
-      if(isLoadingFromCloud)return;
+      // אל תעדכן אם אנחנו באמצע שמירה
+      if(isLoadingFromCloud||isSavingToCloud)return;
       if(snap.exists){
         const raw=snap.data();
         if(raw && raw.data){
           try{
             const cloudDB=JSON.parse(raw.data);
-            if(cloudDB && cloudDB.customers){
+            // עדכן רק אם הענן חדש יותר מה-local
+            if(cloudDB && cloudDB.customers && cloudDB._ts && cloudDB._ts > (DB._ts||0)){
               DB=cloudDB;
               localStorage.setItem(SK,JSON.stringify(DB));
               renderAll();

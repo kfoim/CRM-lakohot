@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CRM לקוחות — הפצת קפואים</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ===== VARIABLES ===== */
+:root {
+  --bg:       #0B0F1A;
+  --bg2:      #111827;
+  --bg3:      #1A2235;
+  --card:     #161D2E;
+  --border:   #1E293B;
+  --blue:     #3B82F6;
+  --cyan:     #06B6D4;
+  --green:    #10B981;
+  --orange:   #F59E0B;
+  --red:      #EF4444;
+  --purple:   #8B5CF6;
+  --text:     #E2E8F0;
+  --text2:    #94A3B8;
+  --text3:    #475569;
+  --radius:   14px;
+}
+
+/* ===== RESET ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body { font-family: ‘Heebo’, sans-serif; background: var(–bg); color: var(–text); min-height: 100vh; overflow-x: hidden; }
+
+/* ===== TOPBAR ===== */
+.topbar {
+background: var(–bg2);
+border-bottom: 1px solid var(–border);
+height: 58px;
+display: flex; align-items: center; justify-content: space-between;
+padding: 0 18px;
+position: sticky; top: 0; z-index: 200;
+}
+.topbar-logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+width: 36px; height: 36px;
+background: linear-gradient(135deg, var(–cyan), var(–blue));
+border-radius: 10px;
+display: flex; align-items: center; justify-content: center;
+font-size: 18px; flex-shrink: 0;
+}
+.logo-text { font-size: 16px; font-weight: 800; line-height: 1.1; }
+.logo-sub  { font-size: 10px; color: var(–text2); font-weight: 400; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.topbar-date { font-size: 11px; color: var(–text3); }
+.badge {
+background: var(–red); color: #fff;
+border-radius: 50%; width: 20px; height: 20px;
+font-size: 10px; font-weight: 700;
+display: flex; align-items: center; justify-content: center;
+}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav {
+position: fixed; bottom: 0; left: 0; right: 0;
+background: var(–bg2); border-top: 1px solid var(–border);
+display: flex; z-index: 200;
+padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.nav-btn {
+flex: 1; padding: 10px 4px 8px;
+display: flex; flex-direction: column; align-items: center; gap: 3px;
+border: none; background: none; color: var(–text3);
+cursor: pointer; font-family: ‘Heebo’, sans-serif;
+transition: color 0.2s; position: relative;
+}
+.nav-btn.active { color: var(–blue); }
+.nav-btn svg   { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nav-btn span  { font-size: 10px; font-weight: 500; }
+.nav-dot {
+position: absolute; top: 8px; right: calc(50% - 14px);
+width: 7px; height: 7px;
+background: var(–red); border-radius: 50%;
+border: 1.5px solid var(–bg2);
+}
+
+/* ===== MAIN CONTENT ===== */
+.main { padding: 16px 16px 84px; max-width: 700px; margin: 0 auto; }
+.page { display: none; animation: fadeIn 0.2s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ===== SECTION TITLE ===== */
+.section-title {
+font-size: 12px; font-weight: 700; color: var(–text3);
+text-transform: uppercase; letter-spacing: 0.6px;
+margin: 20px 0 10px;
+display: flex; align-items: center; justify-content: space-between;
+}
+.section-title:first-child { margin-top: 0; }
+.section-link { font-size: 12px; color: var(–blue); font-weight: 600; cursor: pointer; text-transform: none; letter-spacing: 0; }
+
+/* ===== STAT GRID ===== */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+.stat-card {
+background: var(–card); border: 1px solid var(–border);
+border-radius: var(–radius); padding: 14px 16px;
+}
+.stat-icon  { font-size: 20px; margin-bottom: 8px; }
+.stat-val   { font-size: 26px; font-weight: 900; line-height: 1; }
+.stat-label { font-size: 11px; color: var(–text2); margin-top: 4px; }
+.stat-card.c-blue   { border-right: 3px solid var(–blue);   } .stat-card.c-blue   .stat-val { color: var(–blue);   }
+.stat-card.c-orange { border-right: 3px solid var(–orange); } .stat-card.c-orange .stat-val { color: var(–orange); }
+.stat-card.c-red    { border-right: 3px solid var(–red);    } .stat-card.c-red    .stat-val { color: var(–red);    }
+.stat-card.c-purple { border-right: 3px solid var(–purple); } .stat-card.c-purple .stat-val { color: var(–purple); }
+
+/* ===== ALERT CARDS ===== */
+.alert-card {
+background: var(–card); border: 1px solid var(–border);
+border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+display: flex; align-items: center; gap: 12px;
+cursor: pointer; transition: border-color 0.2s;
+}
+.alert-card.danger  { border-right: 3px solid var(–red);    }
+.alert-card.warning { border-right: 3px solid var(–orange); }
+.alert-card.info    { border-right: 3px solid var(–blue);   }
+.alert-card:hover   { border-color: var(–blue); }
+.alert-icon    { font-size: 22px; flex-shrink: 0; }
+.alert-body    { flex: 1; min-width: 0; }
+.alert-title   { font-size: 14px; font-weight: 600; }
+.alert-sub     { font-size: 12px; color: var(–text2); margin-top: 2px; }
+.alert-cta     { font-size: 11px; color: var(–blue); font-weight: 700; flex-shrink: 0; }
+
+/* ===== VISIT CARDS ===== */
+.visit-card {
+background: var(–card); border: 1px solid var(–border);
+border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+display: flex; align-items: center; gap: 12px;
+cursor: pointer; transition: border-color 0.2s;
+}
+.visit-card:hover { border-color: var(–blue); }
+.v-avatar {
+width: 40px; height: 40px; border-radius: 50%;
+display: flex; align-items: center; justify-content: center;
+font-size: 15px; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.v-info      { flex: 1; min-width: 0; }
+.v-name      { font-size: 14px; font-weight: 700; }
+.v-meta      { font-size: 12px; color: var(–text2); margin-top: 2px; }
+.vstatus     { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; flex-shrink: 0; white-space: nowrap; }
+.s-done      { background: rgba(16,185,129,0.15);  color: var(–green);  }
+.s-pending   { background: rgba(245,158,11,0.15);  color: var(–orange); }
+.s-late      { background: rgba(239,68,68,0.15);   color: var(–red);    }
+
+/* ===== CUSTOMER CARDS ===== */
+.search-bar {
+background: var(–bg3); border: 1px solid var(–border);
+border-radius: 12px; padding: 11px 14px;
+display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
+.search-bar input {
+background: none; border: none; outline: none;
+color: var(–text); font-family: ‘Heebo’, sans-serif; font-size: 14px; flex: 1;
+direction: rtl;
+}
+.search-bar input::placeholder { color: var(–text3); }
+
+.customer-card {
+background: var(–card); border: 1px solid var(–border);
+border-radius: var(–radius); padding: 14px 16px; margin-bottom: 10px;
+cursor: pointer; transition: all 0.2s;
+}
+.customer-card:hover { border-color: var(–blue); transform: translateY(-1px); }
+.c-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.c-avatar {
+width: 44px; height: 44px; border-radius: 12px;
+display: flex; align-items: center; justify-content: center;
+font-size: 18px; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.c-name    { font-size: 15px; font-weight: 700; }
+.c-addr    { font-size: 12px; color: var(–text2); margin-top: 2px; }
+.c-tags    { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+.tag-pill  { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+.t-blue    { background: rgba(59,130,246,0.15);  color: var(–blue);   }
+.t-green   { background: rgba(16,185,129,0.15);  color: var(–green);  }
+.t-orange  { background: rgba(245,158,11,0.15);  color: var(–orange); }
+.t-red     { background: rgba(239,68,68,0.15);   color: var(–red);    }
+.t-purple  { background: rgba(139,92,246,0.15);  color: var(–purple); }
+
+.c-stats   { display: flex; gap: 8px; }
+.cstat     { flex: 1; background: var(–bg3); border-radius: 8px; padding: 8px 10px; text-align: center; }
+.cstat-val { font-size: 14px; font-weight: 800; }
+.cstat-lbl { font-size: 10px; color: var(–text2); margin-top: 2px; }
+
+/* ===== INVENTORY ===== */
+.filter-row { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+.filter-row::-webkit-scrollbar { display: none; }
+.f-btn {
+padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+border: 1px solid var(–border); background: var(–bg3); color: var(–text2);
+cursor: pointer; white-space: nowrap; font-family: ‘Heebo’, sans-serif; transition: all 0.2s;
+}
+.f-btn.active { background: var(–blue); border-color: var(–blue); color: #fff; }
+
+.inv-card {
+background: var(–card); border: 1px solid var(–border);
+border-radius: var(–radius); padding: 14px 16px; margin-bottom: 10px;
+}
+.inv-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.inv-cname { font-size: 15px; font-weight: 700; }
+.inv-caddr { font-size: 11px; color: var(–text2); margin-top: 2px; }
+.inv-visit { font-size: 11px; color: var(–text3); }
+
+.products-list { display: flex; flex-direction: column; gap: 7px; }
+.product-row {
+display: flex; align-items: center; gap: 10px;
+background: var(–bg3); border-radius: 8px; padding: 9px 10px;
+}
+.p-name  { flex: 1; font-size: 13px; font-weight: 600; min-width: 0; }
+.p-qty   { font-size: 13px; font-weight: 800; min-width: 48px; text-align: center; }
+.p-bar-wrap { flex: 2; background: var(–border); border-radius: 4px; height: 5px; overflow: hidden; min-width: 50px; }
+.p-bar   { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.bar-g   { background: var(–green);  }
+.bar-o   { background: var(–orange); }
+.bar-r   { background: var(–red);    }
+.p-days  { font-size: 11px; font-weight: 600; min-width: 55px; text-align: left; direction: ltr; }
+.d-ok    { color: var(–green);  }
+.d-warn  { color: var(–orange); }
+.d-crit  { color: var(–red);    }
+
+.order-suggest-btn {
+margin-top: 12px; width: 100%;
+background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(6,182,212,0.08));
+border: 1px solid rgba(59,130,246,0.3); border-radius: 10px; padding: 10px;
+color: var(–cyan); font-size: 13px; font-weight: 600;
+cursor: pointer; font-family: ‘Heebo’, sans-serif;
+display: flex; align-items: center; justify-content: center; gap: 6px;
+transition: background 0.2s;
+}
+.order-suggest-btn:hover { background: rgba(59,130,246,0.2); }
+
+/* ===== ORDERS PAGE ===== */
+.order-card {
+background: var(–card); border: 1px solid var(–border);
+border-radius: var(–radius); padding: 14px 16px; margin-bottom: 10px;
+}
+.ord-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.ord-name { font-size: 15px; font-weight: 700; }
+.ord-date { font-size: 11px; color: var(–text2); margin-top: 2px; }
+.ord-status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.ord-items { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.ord-item  { display: flex; justify-content: space-between; font-size: 13px; color: var(–text2); }
+.ord-item strong { color: var(–text); font-weight: 600; }
+.ord-total { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; padding-top: 10px; border-top: 1px solid var(–border); }
+
+/* ===== FAB ===== */
+.fab {
+position: fixed; bottom: 82px; left: 18px;
+width: 52px; height: 52px;
+background: linear-gradient(135deg, var(–blue), var(–cyan));
+border-radius: 50%; display: flex; align-items: center; justify-content: center;
+font-size: 26px; color: #fff; cursor: pointer; border: none;
+box-shadow: 0 4px 20px rgba(59,130,246,0.45); z-index: 150;
+transition: transform 0.2s;
+}
+.fab:hover { transform: scale(1.07); }
+
+/* ===== MODAL ===== */
+.overlay {
+position: fixed; inset: 0; background: rgba(0,0,0,0.72);
+z-index: 300; display: none; align-items: flex-end;
+-webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+.overlay.open { display: flex; }
+.modal-sheet {
+background: var(–bg2);
+border-radius: 20px 20px 0 0;
+border-top: 1px solid var(–border);
+width: 100%; max-height: 92vh;
+overflow-y: auto; padding: 8px 16px 48px;
+}
+.modal-handle {
+width: 36px; height: 4px; background: var(–border);
+border-radius: 2px; margin: 10px auto 18px;
+}
+.modal-title { font-size: 19px; font-weight: 800; margin-bottom: 4px; }
+.modal-sub   { font-size: 13px; color: var(–text2); margin-bottom: 20px; }
+.m-section   { margin-bottom: 20px; }
+.m-sec-title {
+font-size: 11px; font-weight: 700; color: var(–text3);
+text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
+}
+.detail-row {
+display: flex; justify-content: space-between; align-items: center;
+padding: 10px 0; border-bottom: 1px solid var(–border);
+}
+.detail-row:last-child { border-bottom: none; }
+.dk { font-size: 13px; color: var(–text2); }
+.dv { font-size: 13px; font-weight: 600; }
+
+.action-row { display: flex; gap: 8px; margin-bottom: 6px; }
+.a-btn {
+flex: 1; padding: 12px 6px; border-radius: 12px;
+font-size: 13px; font-weight: 700; cursor: pointer;
+font-family: ‘Heebo’, sans-serif; border: none;
+display: flex; align-items: center; justify-content: center; gap: 5px;
+transition: opacity 0.2s;
+}
+.a-btn:hover { opacity: 0.82; }
+.a-blue   { background: var(–blue);   color: #fff; }
+.a-green  { background: var(–green);  color: #fff; }
+.a-orange { background: var(–orange); color: #fff; }
+.a-ghost  { background: transparent; border: 1px solid var(–border) !important; color: var(–text2); }
+
+.log-item { display: flex; gap: 12px; margin-bottom: 14px; position: relative; }
+.log-item:not(:last-child)::before {
+content: ‘’; position: absolute;
+right: 17px; top: 30px; bottom: -14px;
+width: 1px; background: var(–border);
+}
+.log-dot {
+width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+background: var(–bg3); border: 1px solid var(–border);
+display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.log-body     { flex: 1; }
+.log-date     { font-size: 11px; color: var(–text3); margin-bottom: 2px; }
+.log-title    { font-size: 13px; font-weight: 600; }
+.log-note     { font-size: 12px; color: var(–text2); margin-top: 2px; }
+
+/* ===== FORMS ===== */
+.form-group  { margin-bottom: 14px; }
+.form-label  { font-size: 12px; font-weight: 600; color: var(–text2); margin-bottom: 6px; display: block; }
+.form-input, .form-select, .form-textarea {
+width: 100%; background: var(–bg3); border: 1px solid var(–border);
+border-radius: 10px; padding: 11px 14px;
+color: var(–text); font-family: ‘Heebo’, sans-serif; font-size: 14px;
+outline: none; direction: rtl; transition: border-color 0.2s;
+-webkit-appearance: none; appearance: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(–blue); }
+.form-textarea { resize: vertical; min-height: 72px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.p-inv-row {
+display: flex; align-items: center; gap: 10px;
+background: var(–bg3); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+}
+.p-inv-name  { flex: 1; font-size: 13px; font-weight: 600; }
+.p-inv-input {
+width: 68px; background: var(–bg); border: 1px solid var(–border);
+border-radius: 8px; padding: 7px 8px; text-align: center;
+color: var(–text); font-family: ‘Heebo’, sans-serif; font-size: 15px; font-weight: 800;
+outline: none; direction: ltr;
+}
+.p-inv-unit  { font-size: 11px; color: var(–text3); min-width: 24px; }
+
+/* ===== TOAST ===== */
+.toast {
+position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%);
+background: var(–bg2); border: 1px solid var(–green); color: var(–green);
+padding: 10px 22px; border-radius: 30px; font-size: 13px; font-weight: 600;
+z-index: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.toast.show { opacity: 1; }
+
+/* ===== EMPTY STATE ===== */
+.empty { text-align: center; padding: 50px 20px; color: var(–text3); }
+.empty-icon { font-size: 42px; margin-bottom: 12px; }
+.empty p { font-size: 14px; }
+</style>
+
+</head>
+<body>
+
+<!-- ==================== TOPBAR ==================== -->
+
+<header class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-icon">🧊</div>
+    <div>
+      <div class="logo-text">CRM קפואים</div>
+      <div class="logo-sub">ניהול הפצה</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-date" id="todayDate"></span>
+    <div class="badge">3</div>
+  </div>
+</header>
+
+<!-- ==================== MAIN ==================== -->
+
+<main class="main">
+
+  <!-- ===== PAGE: בית ===== -->
+
+  <section class="page active" id="page-home">
+
+```
+<div style="margin-bottom:18px">
+  <h1 style="font-size:22px;font-weight:800">בוקר טוב, צחי 👋</h1>
+  <p style="color:var(--text2);font-size:13px;margin-top:3px">יש לך 7 ביקורים היום · 3 התראות מלאי</p>
+</div>
+
+<!-- Stats -->
+<div class="stat-grid">
+  <div class="stat-card c-blue">
+    <div class="stat-icon">🏪</div>
+    <div class="stat-val">47</div>
+    <div class="stat-label">לקוחות פעילים</div>
+  </div>
+  <div class="stat-card c-orange">
+    <div class="stat-icon">📅</div>
+    <div class="stat-val">7</div>
+    <div class="stat-label">ביקורים היום</div>
+  </div>
+  <div class="stat-card c-red">
+    <div class="stat-icon">⚠️</div>
+    <div class="stat-val">3</div>
+    <div class="stat-label">מלאי נמוך</div>
+  </div>
+  <div class="stat-card c-purple">
+    <div class="stat-icon">📦</div>
+    <div class="stat-val">5</div>
+    <div class="stat-label">הזמנות ממתינות</div>
+  </div>
+</div>
+
+<!-- Alerts -->
+<div class="section-title">
+  <span>⚠️ התראות מלאי</span>
+  <span class="section-link" onclick="switchPage('inventory')">הצג הכל ›</span>
+</div>
+
+<div class="alert-card danger" onclick="switchPage('inventory')">
+  <div class="alert-icon">🍦</div>
+  <div class="alert-body">
+    <div class="alert-title">מכולת דוד — גלידה שוקולד</div>
+    <div class="alert-sub">נותרו 8 יח׳ · מספיק ל-2 ימים בלבד</div>
+  </div>
+  <div class="alert-cta">הזמן →</div>
+</div>
+
+<div class="alert-card warning" onclick="switchPage('inventory')">
+  <div class="alert-icon">🥦</div>
+  <div class="alert-body">
+    <div class="alert-title">סופרמרקט כהן — ירקות מעורב</div>
+    <div class="alert-sub">נותרו 15 יח׳ · מספיק ל-4 ימים</div>
+  </div>
+  <div class="alert-cta">הזמן →</div>
+</div>
+
+<div class="alert-card info" onclick="switchPage('inventory')">
+  <div class="alert-icon">🥐</div>
+  <div class="alert-body">
+    <div class="alert-title">מינימרקט לוי — בצק עלים</div>
+    <div class="alert-sub">נותרו 20 יח׳ · מספיק ל-5 ימים</div>
+  </div>
+  <div class="alert-cta">בדוק →</div>
+</div>
+
+<!-- Today visits -->
+<div class="section-title" style="margin-top:22px">
+  <span>📍 ביקורים היום</span>
+</div>
+
+<div class="visit-card" onclick="openCustomer('david')">
+  <div class="v-avatar" style="background:linear-gradient(135deg,#3B82F6,#06B6D4)">ד</div>
+  <div class="v-info">
+    <div class="v-name">מכולת דוד</div>
+    <div class="v-meta">📍 הרצל 12, חיפה · 08:30</div>
+  </div>
+  <div class="vstatus s-done">✓ בוצע</div>
+</div>
+
+<div class="visit-card" onclick="openCustomer('cohen')">
+  <div class="v-avatar" style="background:linear-gradient(135deg,#10B981,#059669)">כ</div>
+  <div class="v-info">
+    <div class="v-name">סופרמרקט כהן</div>
+    <div class="v-meta">📍 ויצמן 45, נשר · 10:00</div>
+  </div>
+  <div class="vstatus s-pending">ממתין</div>
+</div>
+
+<div class="visit-card" onclick="openCustomer('levi')">
+  <div class="v-avatar" style="background:linear-gradient(135deg,#8B5CF6,#6D28D9)">ל</div>
+  <div class="v-info">
+    <div class="v-name">מינימרקט לוי</div>
+    <div class="v-meta">📍 בן גוריון 8, טירת כרמל · 11:30</div>
+  </div>
+  <div class="vstatus s-pending">ממתין</div>
+</div>
+
+<div class="visit-card">
+  <div class="v-avatar" style="background:linear-gradient(135deg,#F59E0B,#D97706)">מ</div>
+  <div class="v-info">
+    <div class="v-name">מינימרקט מזרחי</div>
+    <div class="v-meta">📍 אחד העם 3, זכרון יעקב · 13:00</div>
+  </div>
+  <div class="vstatus s-late">באיחור</div>
+</div>
+```
+
+  </section>
+
+  <!-- ===== PAGE: לקוחות ===== -->
+
+  <section class="page" id="page-customers">
+
+```
+<div class="section-title" style="margin-top:0">
+  <span>47 לקוחות</span>
+  <button onclick="toast('בקרוב: הוספת לקוח 🔜')" style="background:var(--blue);color:#fff;border:none;padding:5px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:Heebo,sans-serif">+ הוסף</button>
+</div>
+
+<div class="search-bar">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+  <input type="text" placeholder="חפש לקוח, כתובת, עיר..." id="cSearch" oninput="filterCustomers(this.value)">
+</div>
+
+<div id="customerList">
+
+  <div class="customer-card" onclick="openCustomer('david')">
+    <div class="c-header">
+      <div class="c-avatar" style="background:linear-gradient(135deg,#3B82F6,#06B6D4)">ד</div>
+      <div style="flex:1">
+        <div class="c-name">מכולת דוד</div>
+        <div class="c-addr">📍 הרצל 12, חיפה</div>
+        <div class="c-tags">
+          <span class="tag-pill t-blue">פעיל</span>
+          <span class="tag-pill t-orange">שבועי</span>
+          <span class="tag-pill t-red">מלאי נמוך ⚠️</span>
+        </div>
+      </div>
+      <div style="color:var(--text3);font-size:20px">›</div>
+    </div>
+    <div class="c-stats">
+      <div class="cstat"><div class="cstat-val" style="color:var(--blue)">3</div><div class="cstat-lbl">מוצרים</div></div>
+      <div class="cstat"><div class="cstat-val" style="color:var(--green)">לפני 3י׳</div><div class="cstat-lbl">ביקור</div></div>
+      <div class="cstat"><div class="cstat-val" style="color:var(--red)">2 ימים</div><div class="cstat-lbl">מינ׳ מלאי</div></div>
+    </div>
+  </div>
+
+  <div class="customer-card" onclick="openCustomer('cohen')">
+    <div class="c-header">
+      <div class="c-avatar" style="background:linear-gradient(135deg,#10B981,#059669)">כ</div>
+      <div style="flex:1">
+        <div class="c-name">סופרמרקט כהן</div>
+        <div class="c-addr">📍 ויצמן 45, נשר</div>
+        <div class="c-tags">
+          <span class="tag-pill t-blue">פעיל</span>
+          <span class="tag-pill t-green">דו-שבועי</span>
+          <span class="tag-pill t-orange">אזהרה</span>
+        </div>
+      </div>
+      <div style="color:var(--text3);font-size:20px">›</div>
+    </div>
+    <div class="c-stats">
+      <div class="cstat"><div class="cstat-val" style="color:var(--blue)">5</div><div class="cstat-lbl">מוצרים</div></div>
+      <div class="cstat"><div class="cstat-val" style="color:var(--orange)">לפני 7י׳</div><div class="cstat-lbl">ביקור</div></div>
+      <div class="cstat"><div class="cstat-val" style="color:var(--green)">7 ימים</div><div class="cstat-lbl">מינ׳ מלאי</div></div>
+    </div>
+  </div>
+
+  <div class="customer-card" onclick="openCustomer('levi')">
+    <div class="c-header">
+      <div class="c-avatar" style="background:linear-gradient(135deg,#8B5CF6,#6D28D9)">ל</div>
+      <div style="flex:1">
+        <div class="c-name">מינימרקט לוי</div>
+        <div class="c-addr">📍 בן גוריון 8, טירת כרמל</div>
+        <div class="c-tags">
+          <span class="tag-pill t-blue">פעיל</span>
+          <span class="tag-pill t-orange">שבועי</span>
+        </div>
+      </div>
+      <div style="color:var(--text3);font-size:20px">›</div>
+    </div>
+    <div class="c-stats">
+      <div class="cstat"><div class="cstat-val" style="color:var(--blue)">4</div><div class="cstat-lbl">מוצרים</div></div>
+      <div class="cstat"><div class="cstat-val" style="color:var(--orange)">לפני 5י׳</div><div class="cstat-lbl">ביקור</div></div>
+      <div class="cstat"><div class="cstat-val" style="color:var(--orange)">5 ימים</div><div class="cstat-lbl">מינ׳ מלאי</div></div>
+    </div>
+  </div>
+
+  <div class="customer-card">
+    <div class="c-header">
+      <div class="c-avatar" style="background:linear-gradient(135deg,#F59E0B,#D97706)">מ</div>
+      <div style="flex:1">
+        <div class="c-name">מינימרקט מזרחי</div>
+        <div class="c-addr">📍 אחד העם 3, זכרון יעקב</div>
+        <div class="c-tags">
+          <span class="tag-pill t-blue">פעיל</span>
+          <span class="tag-pill t-green">שבועי</span>
+          <span class="tag-pill t-green">תקין</span>
+        </div>
+      </div>
+      <div style="color:var(--text3);font-size:20px">›</div>
+    </div>
+    <div class="c-stats">
+      <div class="cstat"><div class="cstat-val" style="color:var(--blue)">6</div><div class="cstat-lbl">מוצרים</div></div>
+      <div class="cstat"><div class="cstat-val" style="color:var(--green)">אתמול</div><div class="cstat-lbl">ביקור</div></div>
+      <div class="cstat"><div class="cstat-val" style="color:var(--green)">10 ימים</div><div class="cstat-lbl">מינ׳ מלאי</div></div>
+    </div>
+  </div>
+
+</div>
+```
+
+  </section>
+
+  <!-- ===== PAGE: מלאי ===== -->
+
+  <section class="page" id="page-inventory">
+
+```
+<div class="section-title" style="margin-top:0"><span>📦 מלאי אצל לקוחות</span></div>
+
+<div class="filter-row">
+  <button class="f-btn active" onclick="filterInv(this,'all')">הכל</button>
+  <button class="f-btn"        onclick="filterInv(this,'danger')">🔴 דחוף</button>
+  <button class="f-btn"        onclick="filterInv(this,'warning')">🟡 אזהרה</button>
+  <button class="f-btn"        onclick="filterInv(this,'ok')">🟢 תקין</button>
+</div>
+
+<!-- דוד — דחוף -->
+<div class="inv-card" data-inv="danger">
+  <div class="inv-head">
+    <div>
+      <div class="inv-cname">🏪 מכולת דוד</div>
+      <div class="inv-caddr">הרצל 12, חיפה</div>
+    </div>
+    <div class="inv-visit">ביקור: לפני 3 ימים</div>
+  </div>
+  <div class="products-list">
+    <div class="product-row">
+      <div class="p-name">🍦 גלידה שוקולד</div>
+      <div class="p-qty" style="color:var(--red)">8 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-r" style="width:16%"></div></div>
+      <div class="p-days d-crit">2 ימים ⚠️</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🍓 גלידה תות</div>
+      <div class="p-qty" style="color:var(--orange)">18 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-o" style="width:36%"></div></div>
+      <div class="p-days d-warn">5 ימים</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🍕 פיצה קפואה</div>
+      <div class="p-qty" style="color:var(--green)">35 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:70%"></div></div>
+      <div class="p-days d-ok">12 ימים</div>
+    </div>
+  </div>
+  <button class="order-suggest-btn" onclick="toast('✅ הזמנה נוצרה עבור מכולת דוד')">
+    📋 צור הזמנה אוטומטית — גלידה שוקולד
+  </button>
+</div>
+
+<!-- כהן — אזהרה -->
+<div class="inv-card" data-inv="warning">
+  <div class="inv-head">
+    <div>
+      <div class="inv-cname">🏬 סופרמרקט כהן</div>
+      <div class="inv-caddr">ויצמן 45, נשר</div>
+    </div>
+    <div class="inv-visit">ביקור: לפני 7 ימים</div>
+  </div>
+  <div class="products-list">
+    <div class="product-row">
+      <div class="p-name">🥦 ירקות מעורב</div>
+      <div class="p-qty" style="color:var(--orange)">15 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-o" style="width:30%"></div></div>
+      <div class="p-days d-warn">4 ימים</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🥕 גזר קפוא</div>
+      <div class="p-qty" style="color:var(--green)">40 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:80%"></div></div>
+      <div class="p-days d-ok">14 ימים</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🍦 גלידה וניל</div>
+      <div class="p-qty" style="color:var(--green)">28 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:56%"></div></div>
+      <div class="p-days d-ok">9 ימים</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🥐 בצק שמרים</div>
+      <div class="p-qty" style="color:var(--green)">22 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:44%"></div></div>
+      <div class="p-days d-ok">8 ימים</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🥩 שניצל קפוא</div>
+      <div class="p-qty" style="color:var(--green)">30 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:60%"></div></div>
+      <div class="p-days d-ok">11 ימים</div>
+    </div>
+  </div>
+  <button class="order-suggest-btn" onclick="toast('✅ הזמנה נוצרה עבור סופרמרקט כהן')">
+    📋 צור הזמנה — ירקות מעורב
+  </button>
+</div>
+
+<!-- לוי — אזהרה -->
+<div class="inv-card" data-inv="warning">
+  <div class="inv-head">
+    <div>
+      <div class="inv-cname">🏪 מינימרקט לוי</div>
+      <div class="inv-caddr">בן גוריון 8, טירת כרמל</div>
+    </div>
+    <div class="inv-visit">ביקור: לפני 5 ימים</div>
+  </div>
+  <div class="products-list">
+    <div class="product-row">
+      <div class="p-name">🥐 בצק עלים</div>
+      <div class="p-qty" style="color:var(--orange)">20 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-o" style="width:33%"></div></div>
+      <div class="p-days d-warn">5 ימים</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🍦 גלידה שוקולד</div>
+      <div class="p-qty" style="color:var(--green)">25 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:50%"></div></div>
+      <div class="p-days d-ok">8 ימים</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🥕 גזר קפוא</div>
+      <div class="p-qty" style="color:var(--green)">18 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:40%"></div></div>
+      <div class="p-days d-ok">7 ימים</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🥩 קציצות קפואות</div>
+      <div class="p-qty" style="color:var(--green)">32 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:64%"></div></div>
+      <div class="p-days d-ok">10 ימים</div>
+    </div>
+  </div>
+</div>
+
+<!-- מזרחי — תקין -->
+<div class="inv-card" data-inv="ok">
+  <div class="inv-head">
+    <div>
+      <div class="inv-cname">🏪 מינימרקט מזרחי</div>
+      <div class="inv-caddr">אחד העם 3, זכרון יעקב</div>
+    </div>
+    <div class="inv-visit">ביקור: אתמול</div>
+  </div>
+  <div class="products-list">
+    <div class="product-row">
+      <div class="p-name">🍦 גלידה וניל</div>
+      <div class="p-qty" style="color:var(--green)">45 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:90%"></div></div>
+      <div class="p-days d-ok">15 ימים</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🥦 ירקות מעורב</div>
+      <div class="p-qty" style="color:var(--green)">38 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:76%"></div></div>
+      <div class="p-days d-ok">13 ימים</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🥩 שניצל קפוא</div>
+      <div class="p-qty" style="color:var(--green)">50 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:100%"></div></div>
+      <div class="p-days d-ok">18 ימים</div>
+    </div>
+    <div class="product-row">
+      <div class="p-name">🍕 פיצה קפואה</div>
+      <div class="p-qty" style="color:var(--green)">29 יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar bar-g" style="width:58%"></div></div>
+      <div class="p-days d-ok">11 ימים</div>
+    </div>
+  </div>
+</div>
+```
+
+  </section>
+
+  <!-- ===== PAGE: הזמנות ===== -->
+
+  <section class="page" id="page-orders">
+
+```
+<div class="section-title" style="margin-top:0">
+  <span>📋 הזמנות עתידיות</span>
+  <button onclick="toast('בקרוב: הזמנה ידנית 🔜')" style="background:var(--blue);color:#fff;border:none;padding:5px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:Heebo,sans-serif">+ חדשה</button>
+</div>
+
+<div class="order-card">
+  <div class="ord-head">
+    <div>
+      <div class="ord-name">🏪 מכולת דוד</div>
+      <div class="ord-date">הוזמן היום · אספקה: מחר 20.2</div>
+    </div>
+    <div class="ord-status" style="background:rgba(239,68,68,0.15);color:var(--red)">דחוף</div>
+  </div>
+  <div class="ord-items">
+    <div class="ord-item"><span>גלידה שוקולד</span><strong>24 יח׳</strong></div>
+    <div class="ord-item"><span>גלידה תות</span><strong>12 יח׳</strong></div>
+  </div>
+  <div class="ord-total"><span>סה״כ</span><span style="color:var(--cyan)">36 יחידות</span></div>
+</div>
+
+<div class="order-card">
+  <div class="ord-head">
+    <div>
+      <div class="ord-name">🏬 סופרמרקט כהן</div>
+      <div class="ord-date">הוזמן אתמול · אספקה: 21.2</div>
+    </div>
+    <div class="ord-status" style="background:rgba(245,158,11,0.15);color:var(--orange)">בהכנה</div>
+  </div>
+  <div class="ord-items">
+    <div class="ord-item"><span>ירקות מעורב</span><strong>30 יח׳</strong></div>
+    <div class="ord-item"><span>גזר קפוא</span><strong>20 יח׳</strong></div>
+    <div class="ord-item"><span>גלידה וניל</span><strong>24 יח׳</strong></div>
+  </div>
+  <div class="ord-total"><span>סה״כ</span><span style="color:var(--cyan)">74 יחידות</span></div>
+</div>
+
+<div class="order-card">
+  <div class="ord-head">
+    <div>
+      <div class="ord-name">🏪 מינימרקט לוי</div>
+      <div class="ord-date">הוזמן 17.2 · אספקה: 22.2</div>
+    </div>
+    <div class="ord-status" style="background:rgba(16,185,129,0.15);color:var(--green)">אושר</div>
+  </div>
+  <div class="ord-items">
+    <div class="ord-item"><span>בצק עלים</span><strong>24 יח׳</strong></div>
+    <div class="ord-item"><span>קציצות קפואות</span><strong>18 יח׳</strong></div>
+  </div>
+  <div class="ord-total"><span>סה״כ</span><span style="color:var(--cyan)">42 יחידות</span></div>
+</div>
+
+<div class="order-card">
+  <div class="ord-head">
+    <div>
+      <div class="ord-name">🏪 מינימרקט מזרחי</div>
+      <div class="ord-date">הוזמן 15.2 · אספקה: 23.2</div>
+    </div>
+    <div class="ord-status" style="background:rgba(16,185,129,0.15);color:var(--green)">אושר</div>
+  </div>
+  <div class="ord-items">
+    <div class="ord-item"><span>גלידה וניל</span><strong>36 יח׳</strong></div>
+    <div class="ord-item"><span>שניצל קפוא</span><strong>24 יח׳</strong></div>
+    <div class="ord-item"><span>פיצה קפואה</span><strong>20 יח׳</strong></div>
+  </div>
+  <div class="ord-total"><span>סה״כ</span><span style="color:var(--cyan)">80 יחידות</span></div>
+</div>
+```
+
+  </section>
+
+</main>
+
+<!-- ==================== BOTTOM NAV ==================== -->
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-home" onclick="switchPage('home')">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>בית</span>
+  </button>
+  <button class="nav-btn" id="nav-customers" onclick="switchPage('customers')">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    <span>לקוחות</span>
+  </button>
+  <button class="nav-btn" id="nav-inventory" onclick="switchPage('inventory')">
+    <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+    <span>מלאי</span>
+    <div class="nav-dot"></div>
+  </button>
+  <button class="nav-btn" id="nav-orders" onclick="switchPage('orders')">
+    <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+    <span>הזמנות</span>
+  </button>
+</nav>
+
+<!-- FAB -->
+
+<button class="fab" onclick="openVisitModal()" title="רשום ביקור">+</button>
+
+<!-- ==================== CUSTOMER DETAIL MODAL ==================== -->
+
+<div class="overlay" id="modalCustomer" onclick="closeModal('modalCustomer')">
+  <div class="modal-sheet" onclick="event.stopPropagation()" id="modalCustomerBody">
+    <div class="modal-handle"></div>
+  </div>
+</div>
+
+<!-- ==================== ADD VISIT MODAL ==================== -->
+
+<div class="overlay" id="modalVisit" onclick="closeModal('modalVisit')">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📍 רישום ביקור</div>
+    <div class="modal-sub">עדכן מלאי במקפא ורשום הערות</div>
+
+```
+<div class="form-group">
+  <label class="form-label">לקוח</label>
+  <select class="form-select">
+    <option>מכולת דוד</option>
+    <option>סופרמרקט כהן</option>
+    <option>מינימרקט לוי</option>
+    <option>מינימרקט מזרחי</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label class="form-label">עדכון מלאי במקפא</label>
+  <div class="p-inv-row">
+    <div class="p-inv-name">🍦 גלידה שוקולד</div>
+    <input type="number" class="p-inv-input" value="8" min="0">
+    <div class="p-inv-unit">יח׳</div>
+  </div>
+  <div class="p-inv-row">
+    <div class="p-inv-name">🍓 גלידה תות</div>
+    <input type="number" class="p-inv-input" value="18" min="0">
+    <div class="p-inv-unit">יח׳</div>
+  </div>
+  <div class="p-inv-row">
+    <div class="p-inv-name">🍕 פיצה קפואה</div>
+    <input type="number" class="p-inv-input" value="35" min="0">
+    <div class="p-inv-unit">יח׳</div>
+  </div>
+</div>
+
+<div class="form-group">
+  <label class="form-label">הערות</label>
+  <textarea class="form-textarea" placeholder="הערות מהביקור..."></textarea>
+</div>
+
+<div class="action-row">
+  <button class="a-btn a-ghost" onclick="closeModal('modalVisit')">ביטול</button>
+  <button class="a-btn a-blue" onclick="saveVisit()">💾 שמור ביקור</button>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- TOAST -->
+
+<div class="toast" id="toastEl"></div>
+
+<!-- ==================== JS ==================== -->
+
+<script>
+/* ---- Data ---- */
+const CUSTOMERS = {
+  david: {
+    name:'מכולת דוד', addr:'הרצל 12, חיפה',
+    phone:'052-1234567', contact:'דוד כהן',
+    freq:'שבועי', freezers:1,
+    grad:'linear-gradient(135deg,#3B82F6,#06B6D4)', letter:'ד',
+    products:[
+      {name:'🍦 גלידה שוקולד', qty:8,  max:50, days:2,  s:'danger'},
+      {name:'🍓 גלידה תות',     qty:18, max:50, days:5,  s:'warning'},
+      {name:'🍕 פיצה קפואה',   qty:35, max:50, days:12, s:'ok'},
+    ],
+    visits:[
+      {date:'לפני 3 ימים',  icon:'✅', title:'ביקור שגרתי',       note:'הזמין 24 יח׳ גלידה שוקולד'},
+      {date:'לפני 10 ימים', icon:'✅', title:'ביקור שגרתי',       note:'הכל תקין'},
+      {date:'לפני 17 ימים', icon:'📦', title:'ביקור + מוצר חדש',  note:'הוסף פיצה קפואה לסל'},
+    ]
+  },
+  cohen: {
+    name:'סופרמרקט כהן', addr:'ויצמן 45, נשר',
+    phone:'054-9876543', contact:'רוני כהן',
+    freq:'דו-שבועי', freezers:2,
+    grad:'linear-gradient(135deg,#10B981,#059669)', letter:'כ',
+    products:[
+      {name:'🥦 ירקות מעורב', qty:15, max:50, days:4,  s:'warning'},
+      {name:'🥕 גזר קפוא',    qty:40, max:50, days:14, s:'ok'},
+      {name:'🍦 גלידה וניל',  qty:28, max:50, days:9,  s:'ok'},
+      {name:'🥐 בצק שמרים',  qty:22, max:50, days:8,  s:'ok'},
+      {name:'🥩 שניצל קפוא', qty:30, max:50, days:11, s:'ok'},
+    ],
+    visits:[
+      {date:'לפני 7 ימים',  icon:'✅', title:'ביקור שגרתי', note:'הזמין ירקות ושניצל'},
+      {date:'לפני 21 ימים', icon:'✅', title:'ביקור שגרתי', note:'הכל תקין'},
+    ]
+  },
+  levi: {
+    name:'מינימרקט לוי', addr:'בן גוריון 8, טירת כרמל',
+    phone:'050-5551234', contact:'אבי לוי',
+    freq:'שבועי', freezers:1,
+    grad:'linear-gradient(135deg,#8B5CF6,#6D28D9)', letter:'ל',
+    products:[
+      {name:'🥐 בצק עלים',      qty:20, max:60, days:5,  s:'warning'},
+      {name:'🍦 גלידה שוקולד',  qty:25, max:50, days:8,  s:'ok'},
+      {name:'🥕 גזר קפוא',      qty:18, max:45, days:7,  s:'ok'},
+      {name:'🥩 קציצות קפואות', qty:32, max:50, days:10, s:'ok'},
+    ],
+    visits:[
+      {date:'לפני 5 ימים',  icon:'⚠️', title:'ביקור שגרתי', note:'מלאי בינוני — בצק נמוך'},
+      {date:'לפני 12 ימים', icon:'✅', title:'ביקור שגרתי', note:'הכל תקין'},
+    ]
+  }
+};
+
+/* ---- Navigation ---- */
+function switchPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.getElementById('nav-'  + id).classList.add('active');
+}
+
+/* ---- Customer Modal ---- */
+function openCustomer(id) {
+  const c = CUSTOMERS[id];
+  if (!c) return;
+
+  const prods = c.products.map(p => {
+    const pct = Math.round(p.qty / p.max * 100);
+    const barCls  = p.s==='danger' ? 'bar-r' : p.s==='warning' ? 'bar-o' : 'bar-g';
+    const daysCls = p.s==='danger' ? 'd-crit' : p.s==='warning' ? 'd-warn' : 'd-ok';
+    const qColor  = p.s==='danger' ? 'var(--red)' : p.s==='warning' ? 'var(--orange)' : 'var(--green)';
+    return `<div class="product-row">
+      <div class="p-name">${p.name}</div>
+      <div class="p-qty" style="color:${qColor}">${p.qty} יח׳</div>
+      <div class="p-bar-wrap"><div class="p-bar ${barCls}" style="width:${pct}%"></div></div>
+      <div class="p-days ${daysCls}">${p.days} ימים</div>
+    </div>`;
+  }).join('');
+
+  const logs = c.visits.map(v => `
+    <div class="log-item">
+      <div class="log-dot">${v.icon}</div>
+      <div class="log-body">
+        <div class="log-date">${v.date}</div>
+        <div class="log-title">${v.title}</div>
+        <div class="log-note">${v.note}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('modalCustomerBody').innerHTML = `
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+      <div style="width:50px;height:50px;border-radius:14px;background:${c.grad};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;flex-shrink:0">${c.letter}</div>
+      <div>
+        <div class="modal-title" style="margin-bottom:2px">${c.name}</div>
+        <div style="font-size:12px;color:var(--text2)">📍 ${c.addr}</div>
+      </div>
+    </div>
+
+    <div class="action-row" style="margin-bottom:20px">
+      <button class="a-btn a-blue"   onclick="toast('מתקשר ל${c.contact}...')">📞 התקשר</button>
+      <button class="a-btn a-green"  onclick="closeModal('modalCustomer');openVisitModal()">📍 ביקור</button>
+      <button class="a-btn a-orange" onclick="toast('ניווט ל${c.addr}')">🗺️ נווט</button>
+    </div>
+
+    <div class="m-section">
+      <div class="m-sec-title">פרטי לקוח</div>
+      <div class="detail-row"><span class="dk">איש קשר</span><span class="dv">${c.contact}</span></div>
+      <div class="detail-row"><span class="dk">טלפון</span><span class="dv" dir="ltr">${c.phone}</span></div>
+      <div class="detail-row"><span class="dk">תדירות ביקור</span><span class="dv">${c.freq}</span></div>
+      <div class="detail-row"><span class="dk">מספר מקפאים</span><span class="dv">${c.freezers}</span></div>
+    </div>
+
+    <div class="m-section">
+      <div class="m-sec-title">מלאי במקפא</div>
+      <div class="products-list">${prods}</div>
+    </div>
+
+    <div class="m-section">
+      <div class="m-sec-title">היסטוריית ביקורים</div>
+      ${logs}
+    </div>
+
+    <button class="a-btn a-ghost" style="width:100%;margin-top:4px;border:1px solid var(--border)" onclick="closeModal('modalCustomer')">סגור</button>
+  `;
+  document.getElementById('modalCustomer').classList.add('open');
+}
+
+/* ---- Visit Modal ---- */
+function openVisitModal() {
+  document.getElementById('modalVisit').classList.add('open');
+}
+function saveVisit() {
+  closeModal('modalVisit');
+  toast('✅ הביקור נשמר בהצלחה!');
+}
+
+/* ---- Close Modal ---- */
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+/* ---- Filters ---- */
+function filterCustomers(val) {
+  document.querySelectorAll('#customerList .customer-card').forEach(card => {
+    const txt = card.innerText;
+    card.style.display = txt.includes(val) ? 'block' : 'none';
+  });
+}
+
+function filterInv(btn, status) {
+  document.querySelectorAll('.filter-row .f-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.inv-card').forEach(card => {
+    card.style.display = (status==='all' || card.dataset.inv===status) ? 'block' : 'none';
+  });
+}
+
+/* ---- Toast ---- */
+function toast(msg) {
+  const el = document.getElementById('toastEl');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ---- Date ---- */
+const days  = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const now   = new Date();
+document.getElementById('todayDate').textContent =
+  `יום ${days[now.getDay()]}, ${now.getDate()}.${now.getMonth()+1}`;
+</script>
+
+</body>
+</html>

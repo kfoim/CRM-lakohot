@@ -848,6 +848,10 @@ textarea.fi { resize: none; }
         <div class="fg"><label class="fl">מסירה</label><input class="fi" id="cord-deliver-date" type="date"></div>
       </div>
       <div class="sec-div">פריטים להזמנה</div>
+      <div class="sbar" style="margin-bottom:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="חיפוש מוצר..." id="cord-prod-search" oninput="filterOrderProducts()" style="flex:1;background:none;border:none;outline:none;color:var(--tx);font-family:'Heebo',sans-serif;font-size:13px;text-align:right">
+      </div>
       <div id="cord-items-list"></div>
       <button class="btno" onclick="addCustOrderItem()" style="margin-top:8px">+ הוסף פריט</button>
       <div class="fg" style="margin-top:12px"><label class="fl">הערות</label><textarea class="fi" id="cord-notes" rows="2" placeholder="הוראות מיוחדות..."></textarea></div>
@@ -959,6 +963,10 @@ textarea.fi { resize: none; }
           <span class="st">מלאי הלקוח</span>
           <button onclick="openAddCustInv(activeCid)" style="font-size:12px;font-weight:700;color:var(--ac);background:none;border:none;cursor:pointer">+ הוסף מוצר</button>
         </div>
+        <div class="sbar" style="margin-bottom:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="חיפוש מוצר..." id="inv-search-cust" oninput="renderCustDetailInv(activeCid)" style="flex:1;background:none;border:none;outline:none;color:var(--tx);font-family:'Heebo',sans-serif;font-size:13px;text-align:right">
+        </div>
         <div id="cd-inventory"></div>
       </div>
       <!-- Orders tab -->
@@ -967,6 +975,10 @@ textarea.fi { resize: none; }
           <span class="st">הזמנות</span>
           <button onclick="openAddCustOrder(activeCid)" style="font-size:12px;font-weight:700;color:var(--ac);background:none;border:none;cursor:pointer">+ הזמנה חדשה</button>
         </div>
+        <div class="sbar" style="margin-bottom:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="חיפוש הזמנה..." id="ord-search-cust" oninput="renderCustDetailOrders(activeCid)" style="flex:1;background:none;border:none;outline:none;color:var(--tx);font-family:'Heebo',sans-serif;font-size:13px;text-align:right">
+        </div>
         <div id="cd-orders"></div>
       </div>
       <!-- Debts tab -->
@@ -974,6 +986,10 @@ textarea.fi { resize: none; }
         <div class="sh" style="margin-top:4px;margin-bottom:6px">
           <span class="st">חובות פתוחים</span>
           <button onclick="openDebtModal(activeCid)" style="font-size:12px;font-weight:700;color:var(--ac);background:none;border:none;cursor:pointer">+ הוסף</button>
+        </div>
+        <div class="sbar" style="margin-bottom:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="חיפוש חוב / מסמך..." id="debt-search-cust" oninput="renderCustDetailDebts(activeCid)" style="flex:1;background:none;border:none;outline:none;color:var(--tx);font-family:'Heebo',sans-serif;font-size:13px;text-align:right">
         </div>
         <div id="cd-debts"></div>
       </div>
@@ -1606,10 +1622,24 @@ function openAddCustOrder(cid) {
   document.getElementById('cord-deliver-date').value = '';
   document.getElementById('cord-notes').value = '';
   document.getElementById('cord-items-list').innerHTML = '';
+  const _ps = document.getElementById('cord-prod-search'); if (_ps) _ps.value = '';
   document.getElementById('cord-total-preview').style.display = 'none';
   document.getElementById('cord-inv-notice').style.display = inv.length ? 'none' : 'block';
   openModal('modal-cust-order');
   if (inv.length > 0) addCustOrderItem(); // auto-add first row
+}
+
+function filterOrderProducts() {
+  const q = (document.getElementById('cord-prod-search')?.value || '').trim().toLowerCase();
+  document.querySelectorAll('#cord-items-list select').forEach(sel => {
+    Array.from(sel.options).forEach(opt => {
+      if (!opt.value) return; // keep placeholder
+      opt.hidden = q ? !opt.text.toLowerCase().includes(q) : false;
+    });
+    // If current selection is now hidden, reset it
+    const cur = sel.selectedOptions[0];
+    if (cur && cur.hidden) { sel.value = ''; calcCustOrderTotal(); }
+  });
 }
 
 function addCustOrderItem() {
@@ -1788,6 +1818,9 @@ function setCustDetailTab(tab) {
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
     if (btnEl) btnEl.classList.toggle('active', t === tab);
   });
+  // Clear search on tab switch
+  const searchMap = { inv: 'inv-search-cust', orders: 'ord-search-cust', debts: 'debt-search-cust' };
+  if (searchMap[tab]) { const el = document.getElementById(searchMap[tab]); if (el) el.value = ''; }
   if (tab === 'inv') renderCustDetailInv(activeCid);
   if (tab === 'orders') renderCustDetailOrders(activeCid);
   if (tab === 'debts') renderCustDetailDebts(activeCid);
@@ -1795,7 +1828,9 @@ function setCustDetailTab(tab) {
 
 function renderCustDetailInv(cid) {
   const c = getCust(cid); if (!c) return;
-  const inv = c.inventory || [];
+  const q = (document.getElementById('inv-search-cust')?.value || '').trim().toLowerCase();
+  let inv = c.inventory || [];
+  if (q) inv = inv.filter(i => i.name.toLowerCase().includes(q) || (i.notes || '').toLowerCase().includes(q) || (catNames[i.category] || '').toLowerCase().includes(q));
   document.getElementById('cd-inventory').innerHTML = inv.length
     ? inv.map(item => {
         const qty = Number(item.qty);
@@ -1819,7 +1854,14 @@ function renderCustDetailInv(cid) {
 
 function renderCustDetailOrders(cid) {
   const c = getCust(cid); if (!c) return;
-  const orders = (c.orders || []).sort((a, b) => b.created > a.created ? 1 : -1);
+  const q = (document.getElementById('ord-search-cust')?.value || '').trim().toLowerCase();
+  let orders = (c.orders || []).sort((a, b) => b.created > a.created ? 1 : -1);
+  if (q) orders = orders.filter(o =>
+    (o.items || []).some(i => i.name.toLowerCase().includes(q)) ||
+    (o.notes || '').toLowerCase().includes(q) ||
+    fmtDate(o.created).includes(q) ||
+    ({ pending:'ממתין', delivered:'נמסר', cancelled:'בוטל' }[o.status] || '').includes(q)
+  );
   document.getElementById('cd-orders').innerHTML = orders.length
     ? orders.map(o => {
         const total = (o.items || []).reduce((s, i) => s + (Number(i.qty) * Number(i.price || 0)), 0);
@@ -1842,7 +1884,14 @@ function renderCustDetailOrders(cid) {
 }
 
 function renderCustDetailDebts(cid) {
-  const custDebts = DB.debts.filter(d => d.custId === cid && !d.closed && !d.isCredit).sort((a, b) => b.date.localeCompare(a.date));
+  const q = (document.getElementById('debt-search-cust')?.value || '').trim().toLowerCase();
+  let custDebts = DB.debts.filter(d => d.custId === cid && !d.closed && !d.isCredit).sort((a, b) => b.date.localeCompare(a.date));
+  if (q) custDebts = custDebts.filter(d =>
+    (d.docnum || '').toLowerCase().includes(q) ||
+    (d.desc || '').toLowerCase().includes(q) ||
+    fmtDate(d.date).includes(q) ||
+    String(d.amount).includes(q)
+  );
   let debtHtml = '';
   if (custDebts.length) {
     debtHtml = '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><button onclick="toggleSelectAllDebts(\'' + cid + '\')" style="font-size:12px;font-weight:700;color:var(--ac);background:none;border:none;cursor:pointer" id="btn-sel-all-' + cid + '">☐ בחר הכל</button><button onclick="deleteSelectedDebts(\'' + cid + '\')" style="font-size:12px;font-weight:700;color:var(--rd);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:4px 10px;cursor:pointer;display:none" id="btn-del-sel-' + cid + '">🗑️ מחק נבחרים</button></div>';

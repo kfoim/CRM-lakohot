@@ -786,16 +786,26 @@ textarea.fi { resize: none; }
   </div>
 </div>
 
-<!-- ADD INVENTORY PRODUCT -->
+<!-- CUSTOMER INVENTORY ITEM DETAIL -->
 
-<div class="overlay" id="modal-add-inv">
+<div class="overlay" id="modal-cust-inv-item">
   <div class="sheet">
     <div class="shandle"></div>
-    <div class="shead"><span class="stitle">🛒 מוצר חדש במלאי</span><button class="xbtn" onclick="closeModal('modal-add-inv')">✕</button></div>
+    <div class="shead"><span class="stitle" id="cii-title">מוצר</span><button class="xbtn" onclick="closeModal('modal-cust-inv-item')">✕</button></div>
+    <div class="sbody" id="cii-body"></div>
+  </div>
+</div>
+
+<!-- CUSTOMER INVENTORY FORM (add/edit) -->
+
+<div class="overlay" id="modal-cust-inv-form">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shead"><span class="stitle">📦 מוצר ברשימת לקוח</span><button class="xbtn" onclick="closeModal('modal-cust-inv-form')">✕</button></div>
     <div class="sbody">
-      <div class="fg"><label class="fl">שם מוצר *</label><input class="fi" id="ni-name" placeholder="גלידה שוקולד 1ק״ג"></div>
-      <div class="fg"><label class="fl">קטגוריה *</label>
-        <select class="fi" id="ni-cat">
+      <div class="fg"><label class="fl">שם מוצר *</label><input class="fi" id="cif-name" placeholder="גלידה שוקולד 1ק״ג"></div>
+      <div class="fg"><label class="fl">קטגוריה</label>
+        <select class="fi" id="cif-cat">
           <option value="icecream">🍦 גלידות</option>
           <option value="vegetables">🥦 ירקות קפואים</option>
           <option value="dough">🥐 מוצרי בצק</option>
@@ -804,53 +814,42 @@ textarea.fi { resize: none; }
         </select>
       </div>
       <div class="frow">
-        <div class="fg"><label class="fl">כמות במלאי *</label><input class="fi" id="ni-qty" type="number" placeholder="50" dir="ltr"></div>
-        <div class="fg"><label class="fl">מינימום מלאי</label><input class="fi" id="ni-min" type="number" placeholder="10" dir="ltr"></div>
+        <div class="fg"><label class="fl">כמות ברשותו</label><input class="fi" id="cif-qty" type="number" placeholder="0" dir="ltr"></div>
+        <div class="fg"><label class="fl">כמות מינימום</label><input class="fi" id="cif-min" type="number" placeholder="0" dir="ltr"></div>
       </div>
-      <div class="frow">
-        <div class="fg"><label class="fl">מחיר עלות ₪</label><input class="fi" id="ni-cost" type="number" placeholder="0" dir="ltr"></div>
-        <div class="fg"><label class="fl">מחיר מכירה ₪</label><input class="fi" id="ni-price" type="number" placeholder="0" dir="ltr"></div>
-      </div>
-      <div class="fg"><label class="fl">תאריך תפוגה</label><input class="fi" id="ni-exp" type="date"></div>
-      <div class="fg"><label class="fl">הערות</label><input class="fi" id="ni-notes" placeholder="פרטים..."></div>
-      <button class="btnp" onclick="saveInventoryItem()">הוסף מוצר ✓</button>
+      <div class="fg"><label class="fl">מחיר מכירה ₪</label><input class="fi" id="cif-price" type="number" placeholder="0" dir="ltr"></div>
+      <div class="fg"><label class="fl">תאריך תפוגה</label><input class="fi" id="cif-exp" type="date"></div>
+      <div class="fg"><label class="fl">הערות</label><input class="fi" id="cif-notes" placeholder="פרטים..."></div>
+      <button class="btnp" id="cif-save-btn">שמור ✓</button>
     </div>
   </div>
 </div>
 
-<!-- INVENTORY DETAIL -->
+<!-- CUSTOMER ORDER FORM -->
 
-<div class="overlay" id="modal-inv-detail">
+<div class="overlay" id="modal-cust-order">
   <div class="sheet">
     <div class="shandle"></div>
-    <div class="shead"><span class="stitle" id="invd-title">פרטי מוצר</span><button class="xbtn" onclick="closeModal('modal-inv-detail')">✕</button></div>
-    <div class="sbody" id="invd-body"></div>
-  </div>
-</div>
-
-<!-- CREATE ORDER -->
-
-<div class="overlay" id="modal-add-order">
-  <div class="sheet">
-    <div class="shandle"></div>
-    <div class="shead"><span class="stitle">📋 הזמנה חדשה</span><button class="xbtn" onclick="closeModal('modal-add-order')">✕</button></div>
+    <div class="shead"><span class="stitle" id="cord-title">📋 הזמנה חדשה</span><button class="xbtn" onclick="closeModal('modal-cust-order')">✕</button></div>
     <div class="sbody">
-      <div class="fg"><label class="fl">לקוח *</label><select class="fi" id="ord-cust"></select></div>
+      <div id="cord-inv-notice" style="display:none;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px;color:var(--yw)">
+        ⚠️ ללקוח זה אין מוצרים מוגדרים. הוסף מוצרים תחילה בטאב "מלאי".
+      </div>
       <div class="frow">
-        <div class="fg"><label class="fl">תאריך הזמנה</label><input class="fi" id="ord-date" type="date"></div>
-        <div class="fg"><label class="fl">תאריך מסירה</label><input class="fi" id="ord-deliver-date" type="date"></div>
+        <div class="fg"><label class="fl">תאריך</label><input class="fi" id="cord-date" type="date"></div>
+        <div class="fg"><label class="fl">מסירה</label><input class="fi" id="cord-deliver-date" type="date"></div>
       </div>
       <div class="sec-div">פריטים להזמנה</div>
-      <div id="ord-items-list"></div>
-      <button class="btno" onclick="addOrderItem()" style="margin-top:8px">+ הוסף פריט</button>
-      <div class="fg" style="margin-top:12px"><label class="fl">הערות</label><textarea class="fi" id="ord-notes" rows="2" placeholder="הוראות מיוחדות..."></textarea></div>
-      <div id="ord-total-preview" style="background:var(--s2);border-radius:12px;padding:12px;margin-top:8px;display:none">
+      <div id="cord-items-list"></div>
+      <button class="btno" onclick="addCustOrderItem()" style="margin-top:8px">+ הוסף פריט</button>
+      <div class="fg" style="margin-top:12px"><label class="fl">הערות</label><textarea class="fi" id="cord-notes" rows="2" placeholder="הוראות מיוחדות..."></textarea></div>
+      <div id="cord-total-preview" style="background:var(--s2);border-radius:12px;padding:12px;margin-top:8px;display:none">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:13px;color:var(--t2)">סה"כ הזמנה</span>
-          <span id="ord-total-val" style="font-size:18px;font-weight:900;color:var(--ac)">₪0</span>
+          <span id="cord-total-val" style="font-size:18px;font-weight:900;color:var(--ac)">₪0</span>
         </div>
       </div>
-      <button class="btnp" onclick="saveOrder()">צור הזמנה ✓</button>
+      <button class="btnp" onclick="saveCustOrder()">צור הזמנה ✓</button>
     </div>
   </div>
 </div>
@@ -933,16 +932,43 @@ textarea.fi { resize: none; }
     </div>
     <div class="sbody">
       <div class="arow" id="cd-actions"></div>
-      <div style="margin-top:16px"><div class="sh"><span class="st">פרטים</span></div><div id="cd-info"></div></div>
-      <div style="margin-top:4px"><div class="sh"><span class="st">ציוד אצל לקוח</span></div><div id="cd-equipment"></div></div>
-      <div style="margin-top:4px">
-        <div class="sh" style="margin-bottom:6px">
+      <!-- Tabs -->
+      <div class="tabs" style="margin-top:12px">
+        <div class="tab active" id="cdt-info" onclick="setCustDetailTab('info')">פרטים</div>
+        <div class="tab" id="cdt-inv" onclick="setCustDetailTab('inv')">📦 מלאי</div>
+        <div class="tab" id="cdt-orders" onclick="setCustDetailTab('orders')">🛒 הזמנות</div>
+        <div class="tab" id="cdt-debts" onclick="setCustDetailTab('debts')">חובות</div>
+      </div>
+      <!-- Info tab -->
+      <div id="cd-tab-info">
+        <div style="margin-top:4px"><div id="cd-info"></div></div>
+        <div style="margin-top:4px"><div class="sh"><span class="st">ציוד אצל לקוח</span></div><div id="cd-equipment"></div></div>
+        <div style="margin-top:4px"><div class="sh"><span class="st">היסטוריה אחרונה</span></div><div id="cd-history"></div></div>
+      </div>
+      <!-- Inventory tab -->
+      <div id="cd-tab-inv" style="display:none">
+        <div class="sh" style="margin-top:4px">
+          <span class="st">מלאי הלקוח</span>
+          <button onclick="openAddCustInv(activeCid)" style="font-size:12px;font-weight:700;color:var(--ac);background:none;border:none;cursor:pointer">+ הוסף מוצר</button>
+        </div>
+        <div id="cd-inventory"></div>
+      </div>
+      <!-- Orders tab -->
+      <div id="cd-tab-orders" style="display:none">
+        <div class="sh" style="margin-top:4px">
+          <span class="st">הזמנות</span>
+          <button onclick="openAddCustOrder(activeCid)" style="font-size:12px;font-weight:700;color:var(--ac);background:none;border:none;cursor:pointer">+ הזמנה חדשה</button>
+        </div>
+        <div id="cd-orders"></div>
+      </div>
+      <!-- Debts tab -->
+      <div id="cd-tab-debts" style="display:none">
+        <div class="sh" style="margin-top:4px;margin-bottom:6px">
           <span class="st">חובות פתוחים</span>
           <button onclick="openDebtModal(activeCid)" style="font-size:12px;font-weight:700;color:var(--ac);background:none;border:none;cursor:pointer">+ הוסף</button>
         </div>
         <div id="cd-debts"></div>
       </div>
-      <div style="margin-top:4px"><div class="sh"><span class="st">היסטוריה</span></div><div id="cd-history"></div></div>
     </div>
   </div>
 </div>
@@ -1003,10 +1029,9 @@ textarea.fi { resize: none; }
     <div class="sbody">
       <button class="btno" style="margin-top:0" onclick="closeModal('modal-picker');openModal('modal-add-cust')">👤 לקוח חדש</button>
       <button class="btno" onclick="closeModal('modal-picker');openAddEq()">📦 ציוד חדש</button>
-      <button class="btno" onclick="closeModal('modal-picker');openAddInv()">🛒 מוצר למלאי</button>
-      <button class="btno" onclick="closeModal('modal-picker');openAddOrder()">📋 הזמנה חדשה</button>
       <button class="btno" onclick="closeModal('modal-picker');openAddDebtGeneral()">💸 חוב חדש</button>
       <button class="btno" onclick="closeModal('modal-picker');openPaymentGeneral()">✅ תשלום</button>
+      <div style="margin-top:8px;padding:10px;background:var(--s3);border-radius:10px;font-size:12px;color:var(--t2);text-align:center">📦 מלאי והזמנות — פתח כרטיס לקוח</div>
     </div>
   </div>
 </div>
@@ -1095,22 +1120,23 @@ function updateTopSub() {
 }
 
 // ===================== DATA =====================
-const SK = 'crm_v4';
+const SK = 'crm_v5';
 function load() {
   try { const d = localStorage.getItem(SK); if (d) return JSON.parse(d); } catch(e) {}
-  return { customers: [], equipment: [], payments: [], debts: [], visits: [], inventory: [], orders: [] };
+  try { const old = localStorage.getItem('crm_v4'); if (old) { const db = JSON.parse(old); db.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; }); return db; } } catch(e) {}
+  return { customers: [], equipment: [], payments: [], debts: [], visits: [] };
 }
 function save() {
   if (!DB.visits) DB.visits = [];
-  if (!DB.inventory) DB.inventory = [];
-  if (!DB.orders) DB.orders = [];
+  DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
   localStorage.setItem(SK, JSON.stringify(DB));
   saveToCloud();
 }
 let DB = load();
-if (!DB.inventory) DB.inventory = [];
-if (!DB.orders) DB.orders = [];
 if (!DB.visits) DB.visits = [];
+DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
+function custInventory(cid) { const c = getCust(cid); return c ? (c.inventory || []) : []; }
+function custOrders(cid) { const c = getCust(cid); return c ? (c.orders || []) : []; }
 
 // ===================== UTILS =====================
 function uid() { return '_' + Math.random().toString(36).substr(2, 9); }
@@ -1156,8 +1182,6 @@ document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e
 function openAddModal() {
   if (curPage === 'cust') openModal('modal-add-cust');
   else if (curPage === 'eq') openAddEq();
-  else if (curPage === 'inv') openAddInv();
-  else if (curPage === 'orders') openAddOrder();
   else if (curPage === 'debt') openAddDebtGeneral();
   else openModal('modal-picker');
 }
@@ -1204,11 +1228,13 @@ function renderDashboard() {
   const b = document.getElementById('debt-badge');
   if (dc > 0) { b.textContent = dc; b.classList.add('on'); } else b.classList.remove('on');
 
-  const lowInv = DB.inventory.filter(item => Number(item.qty) <= Number(item.minQty || 10)).length;
+  let lowInv = 0;
+  DB.customers.forEach(c => { (c.inventory || []).forEach(i => { if (Number(i.qty) <= Number(i.minQty || 0) && Number(i.minQty || 0) > 0) lowInv++; }); });
   const ib = document.getElementById('inv-badge');
   if (lowInv > 0) { ib.textContent = lowInv; ib.classList.add('on'); } else ib.classList.remove('on');
 
-  const pendOrd = DB.orders.filter(o => o.status === 'pending').length;
+  let pendOrd = 0;
+  DB.customers.forEach(c => { (c.orders || []).forEach(o => { if (o.status === 'pending') pendOrd++; }); });
   const ob = document.getElementById('ord-badge');
   if (pendOrd > 0) { ob.textContent = pendOrd; ob.classList.add('on'); } else ob.classList.remove('on');
 
@@ -1323,148 +1349,207 @@ function renderDebts() {
     : '<div class="empty"><div class="empty-icon">🎉</div><div class="empty-title">אין חובות!</div></div>';
 }
 
-// ===================== INVENTORY =====================
+// ===================== INVENTORY (per customer) =====================
 function renderInventory() {
   const q = (document.getElementById('inv-search')?.value || '').toLowerCase();
-  let list = [...DB.inventory];
-  if (q) list = list.filter(i => i.name.toLowerCase().includes(q) || (i.notes || '').toLowerCase().includes(q));
-  if (curTab.inv === 'low') list = list.filter(i => Number(i.qty) <= Number(i.minQty || 10));
-  if (curTab.inv === 'icecream') list = list.filter(i => i.category === 'icecream');
-  if (curTab.inv === 'vegetables') list = list.filter(i => i.category === 'vegetables');
-  if (curTab.inv === 'dough') list = list.filter(i => i.category === 'dough');
-  if (curTab.inv === 'other') list = list.filter(i => i.category === 'other' || i.category === 'fruit');
+  // Build list of customers with their inventory
+  let custs = DB.customers.filter(c => c.active && (c.inventory || []).length > 0);
+  if (q) custs = custs.filter(c => c.name.toLowerCase().includes(q) || (c.inventory || []).some(i => i.name.toLowerCase().includes(q)));
 
-  const lowCount = DB.inventory.filter(i => Number(i.qty) <= Number(i.minQty || 10)).length;
-  const okCount = DB.inventory.filter(i => Number(i.qty) > Number(i.minQty || 10)).length;
+  // Stats
+  let totalProds = 0, lowCount = 0;
+  DB.customers.forEach(c => {
+    (c.inventory || []).forEach(i => {
+      totalProds++;
+      if (Number(i.qty) <= Number(i.minQty || 0)) lowCount++;
+    });
+  });
   document.getElementById('inv-low').textContent = lowCount;
-  document.getElementById('inv-ok').textContent = okCount;
+  document.getElementById('inv-total-prods').textContent = totalProds;
 
-  document.getElementById('inv-list').innerHTML = list.length
-    ? list.map(item => invCardHtml(item)).join('')
-    : '<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">אין מוצרים במלאי</div><div class="empty-sub">לחץ + להוספת מוצר</div></div>';
+  // Alerts for low stock
+  const alerts = [];
+  DB.customers.forEach(c => {
+    (c.inventory || []).forEach(i => {
+      if (Number(i.qty) <= Number(i.minQty || 0) && Number(i.minQty || 0) > 0) alerts.push({ cust: c, item: i });
+    });
+  });
+  const alertsEl = document.getElementById('inv-alerts-section');
+  if (alertsEl && alerts.length) {
+    alertsEl.innerHTML = `<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:14px;padding:12px;margin:0 16px 12px">
+      <div style="font-weight:800;color:var(--rd);font-size:13px;margin-bottom:8px">⚠️ מלאי נמוך (${alerts.length})</div>
+      ${alerts.map(a => `<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid rgba(239,68,68,.2);cursor:pointer" onclick="openCustDetail('${a.cust.id}')">
+        <span style="font-size:12px;font-weight:700">${a.cust.name} · ${a.item.name}</span>
+        <span style="font-size:12px;font-weight:900;color:var(--rd)">${a.item.qty} יח'</span>
+      </div>`).join('')}
+    </div>`;
+  } else if (alertsEl) alertsEl.innerHTML = '';
+
+  document.getElementById('inv-list').innerHTML = custs.length
+    ? custs.map(c => {
+        const inv = (c.inventory || []).filter(i => !q || i.name.toLowerCase().includes(q) || c.name.toLowerCase().includes(q));
+        const pendOrd = (c.orders || []).filter(o => o.status === 'pending').length;
+        return `<div style="background:var(--sf);border:1px solid var(--br);border-radius:16px;margin:0 16px 10px;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--br)" onclick="openCustDetail('${c.id}')">
+            <div class="av ${avClass(DB.customers.indexOf(c))}" style="width:36px;height:36px;border-radius:10px;font-size:14px">${avLetter(c.name)}</div>
+            <div style="flex:1"><div style="font-size:14px;font-weight:800">${c.name}</div><div style="font-size:11px;color:var(--t2)">${inv.length} מוצרים${pendOrd ? ' · ' + pendOrd + ' הזמנות ממתינות' : ''}</div></div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </div>
+          ${inv.map(item => {
+            const qty = Number(item.qty);
+            const minQty = Number(item.minQty || 0);
+            const isLow = minQty > 0 && qty <= minQty;
+            return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--br)">
+              <div style="font-size:20px">${catIcons[item.category] || '📦'}</div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:700">${item.name}</div>
+                ${item.expiry ? `<div style="font-size:10px;color:var(--t2)">תפוגה: ${fmtDate(item.expiry)}</div>` : ''}
+              </div>
+              <div style="text-align:left">
+                <div style="font-size:17px;font-weight:900;color:${isLow ? 'var(--rd)' : 'var(--gr)'}">${qty}</div>
+                ${item.salePrice ? `<div style="font-size:10px;color:var(--t2)">${fmt(item.salePrice)}</div>` : ''}
+              </div>
+              ${isLow ? '<span class="chip cr" style="font-size:9px">נמוך</span>' : ''}
+            </div>`;
+          }).join('')}
+        </div>`;
+      }).join('')
+    : '<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">אין מלאי מוגדר</div><div class="empty-sub">פתח לקוח והוסף מוצרים ממסך הלקוח</div></div>';
 }
 
 const catIcons = { icecream: '🍦', vegetables: '🥦', dough: '🥐', fruit: '🍓', other: '📦' };
 const catNames = { icecream: 'גלידות', vegetables: 'ירקות', dough: 'בצק', fruit: 'פירות', other: 'אחר' };
 
-function invCardHtml(item) {
+// Per-customer inventory management
+function openCustInvItem(cid, iid) {
+  const c = getCust(cid); if (!c) return;
+  const item = (c.inventory || []).find(x => x.id === iid); if (!item) return;
   const qty = Number(item.qty);
-  const minQty = Number(item.minQty || 10);
-  const isLow = qty <= minQty;
-  const isCritical = qty <= minQty / 2;
-  const pct = Math.min(100, (qty / Math.max(minQty * 3, qty)) * 100);
-  const barColor = isCritical ? 'var(--rd)' : isLow ? 'var(--yw)' : 'var(--gr)';
-  const daysToExp = item.expiry ? Math.ceil((new Date(item.expiry) - Date.now()) / 86400000) : null;
-  const expChip = daysToExp !== null ? (daysToExp < 0 ? '<span class="chip cr">⚠️ פג תוקף</span>' : daysToExp < 7 ? `<span class="chip cy">⏱️ ${daysToExp} ימים לתפוגה</span>` : '') : '';
-  return `<div class="inv-card" onclick="openInvDetail('${item.id}')">
-    <div class="crow">
-      <div style="font-size:28px;flex-shrink:0">${catIcons[item.category] || '📦'}</div>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:800">${item.name}</div>
-        <div style="font-size:11px;color:var(--t2)">${catNames[item.category] || 'אחר'}${item.expiry ? ' · תפוגה: ' + fmtDate(item.expiry) : ''}</div>
-      </div>
-      <div style="text-align:left">
-        <div style="font-size:18px;font-weight:900;color:${isLow ? 'var(--rd)' : 'var(--gr)'}">${qty}</div>
-        <div style="font-size:10px;color:var(--t2)">יח׳ / מינ׳ ${minQty}</div>
-      </div>
+  const minQty = Number(item.minQty || 0);
+  const isLow = minQty > 0 && qty <= minQty;
+  const modal = document.getElementById('modal-cust-inv-item');
+  document.getElementById('cii-title').textContent = item.name;
+  document.getElementById('cii-body').innerHTML = `
+    <div style="text-align:center;padding:16px 0 10px">
+      <div style="font-size:40px">${catIcons[item.category] || '📦'}</div>
+      <div style="font-size:36px;font-weight:900;color:${isLow ? 'var(--rd)' : 'var(--gr)'};margin-top:6px">${qty}</div>
+      <div style="font-size:12px;color:var(--t2)">יחידות ברשותו</div>
     </div>
-    <div class="inv-bar-wrap"><div class="inv-bar" style="width:${pct}%;background:${barColor}"></div></div>
-    ${isLow || expChip ? `<div class="cfooter">${isLow ? `<span class="chip ${isCritical ? 'cr' : 'cy'}">⚠️ מלאי ${isCritical ? 'קריטי' : 'נמוך'}</span>` : ''}${expChip}</div>` : ''}
-  </div>`;
-}
-
-function openAddInv() {
-  document.getElementById('ni-name').value = '';
-  document.getElementById('ni-qty').value = '';
-  document.getElementById('ni-min').value = '10';
-  document.getElementById('ni-cost').value = '';
-  document.getElementById('ni-price').value = '';
-  document.getElementById('ni-exp').value = '';
-  document.getElementById('ni-notes').value = '';
-  openModal('modal-add-inv');
-}
-
-function saveInventoryItem() {
-  const name = document.getElementById('ni-name').value.trim();
-  const qty = Number(document.getElementById('ni-qty').value);
-  if (!name) { alert('שם מוצר הוא שדה חובה'); return; }
-  if (isNaN(qty) || qty < 0) { alert('כמות לא תקינה'); return; }
-  DB.inventory.push({
-    id: uid(), name,
-    category: document.getElementById('ni-cat').value,
-    qty: qty,
-    minQty: Number(document.getElementById('ni-min').value) || 10,
-    costPrice: Number(document.getElementById('ni-cost').value) || 0,
-    salePrice: Number(document.getElementById('ni-price').value) || 0,
-    expiry: document.getElementById('ni-exp').value,
-    notes: document.getElementById('ni-notes').value.trim(),
-    created: today()
-  });
-  save(); renderAll(); closeModal('modal-add-inv');
-  showToast('מוצר נוסף למלאי ✅');
-}
-
-function openInvDetail(iid) {
-  activeInvId = iid;
-  const item = DB.inventory.find(x => x.id === iid);
-  if (!item) return;
-  document.getElementById('invd-title').textContent = item.name;
-  const qty = Number(item.qty);
-  const minQty = Number(item.minQty || 10);
-  const isLow = qty <= minQty;
-  document.getElementById('invd-body').innerHTML = `
-    <div style="text-align:center;padding:16px 0">
-      <div style="font-size:48px">${catIcons[item.category] || '📦'}</div>
-      <div style="font-size:36px;font-weight:900;color:${isLow ? 'var(--rd)' : 'var(--gr)'};margin-top:8px">${qty}</div>
-      <div style="font-size:13px;color:var(--t2)">יחידות במלאי</div>
-    </div>
-    <div class="dkv"><span class="dk">קטגוריה</span><span class="dv">${catNames[item.category] || '—'}</span></div>
-    <div class="dkv"><span class="dk">מינימום מלאי</span><span class="dv">${item.minQty || 10}</span></div>
-    <div class="dkv"><span class="dk">מחיר עלות</span><span class="dv">${item.costPrice ? fmt(item.costPrice) : '—'}</span></div>
-    <div class="dkv"><span class="dk">מחיר מכירה</span><span class="dv">${item.salePrice ? fmt(item.salePrice) : '—'}</span></div>
-    <div class="dkv"><span class="dk">תאריך תפוגה</span><span class="dv">${item.expiry ? fmtDate(item.expiry) : '—'}</span></div>
+    ${item.salePrice ? `<div class="dkv"><span class="dk">מחיר</span><span class="dv">${fmt(item.salePrice)}</span></div>` : ''}
+    ${item.minQty ? `<div class="dkv"><span class="dk">מינימום</span><span class="dv">${item.minQty} יח'</span></div>` : ''}
+    ${item.expiry ? `<div class="dkv"><span class="dk">תפוגה</span><span class="dv">${fmtDate(item.expiry)}</span></div>` : ''}
     ${item.notes ? `<div class="dkv"><span class="dk">הערות</span><span class="dv">${item.notes}</span></div>` : ''}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
-      <button class="btno" style="margin:0" onclick="adjustInventory('${iid}',1)">+ הוסף מלאי</button>
-      <button class="btno" style="margin:0" onclick="adjustInventory('${iid}',-1)">− הוצא מלאי</button>
+      <button class="btno" style="margin:0" onclick="adjustCustInv('${cid}','${iid}',1)">+ הוסף</button>
+      <button class="btno" style="margin:0" onclick="adjustCustInv('${cid}','${iid}',-1)">− הוצא</button>
     </div>
-    <button class="btnd" onclick="deleteInventoryItem('${iid}')">🗑️ מחק מוצר</button>
-  `;
-  openModal('modal-inv-detail');
+    <button class="btno" style="margin-top:8px;width:100%" onclick="editCustInvItem('${cid}','${iid}')">✏️ עריכה</button>
+    <button class="btnd" onclick="deleteCustInvItem('${cid}','${iid}')">🗑️ מחק מוצר</button>`;
+  openModal('modal-cust-inv-item');
 }
 
-function adjustInventory(iid, dir) {
-  const item = DB.inventory.find(x => x.id === iid);
-  if (!item) return;
+function adjustCustInv(cid, iid, dir) {
+  const c = getCust(cid); if (!c) return;
+  const item = (c.inventory || []).find(x => x.id === iid); if (!item) return;
   const val = prompt(dir > 0 ? 'כמה יחידות להוסיף?' : 'כמה יחידות להוציא?', '1');
   if (val === null || isNaN(val)) return;
-  const n = Number(val);
-  item.qty = Math.max(0, Number(item.qty) + (dir > 0 ? n : -n));
-  save(); renderAll(); closeModal('modal-inv-detail');
-  showToast(dir > 0 ? `+${n} יחידות נוספו ✅` : `-${n} יחידות הוצאו ✅`);
+  item.qty = Math.max(0, Number(item.qty) + (dir > 0 ? Number(val) : -Number(val)));
+  save(); renderAll(); closeModal('modal-cust-inv-item');
+  setTimeout(() => openCustDetail(cid), 200);
+  showToast(dir > 0 ? `+${val} יחידות נוספו ✅` : `-${val} יחידות הוצאו`);
 }
 
-function deleteInventoryItem(iid) {
-  if (!confirm('למחוק מוצר זה?')) return;
-  DB.inventory = DB.inventory.filter(x => x.id !== iid);
-  save(); renderAll(); closeModal('modal-inv-detail');
+function editCustInvItem(cid, iid) {
+  const c = getCust(cid); if (!c) return;
+  const item = (c.inventory || []).find(x => x.id === iid); if (!item) return;
+  document.getElementById('cif-name').value = item.name;
+  document.getElementById('cif-cat').value = item.category || 'icecream';
+  document.getElementById('cif-qty').value = item.qty;
+  document.getElementById('cif-min').value = item.minQty || '';
+  document.getElementById('cif-price').value = item.salePrice || '';
+  document.getElementById('cif-exp').value = item.expiry || '';
+  document.getElementById('cif-notes').value = item.notes || '';
+  document.getElementById('cif-save-btn').onclick = () => saveCustInvEdit(cid, iid);
+  closeModal('modal-cust-inv-item');
+  setTimeout(() => openModal('modal-cust-inv-form'), 200);
+}
+
+function deleteCustInvItem(cid, iid) {
+  if (!confirm('למחוק מוצר זה מהלקוח?')) return;
+  const c = getCust(cid); if (!c) return;
+  c.inventory = (c.inventory || []).filter(x => x.id !== iid);
+  save(); renderAll(); closeModal('modal-cust-inv-item');
+  setTimeout(() => openCustDetail(cid), 200);
   showToast('מוצר נמחק');
 }
 
-// ===================== ORDERS =====================
+function openAddCustInv(cid) {
+  document.getElementById('cif-name').value = '';
+  document.getElementById('cif-cat').value = 'icecream';
+  document.getElementById('cif-qty').value = '0';
+  document.getElementById('cif-min').value = '';
+  document.getElementById('cif-price').value = '';
+  document.getElementById('cif-exp').value = '';
+  document.getElementById('cif-notes').value = '';
+  document.getElementById('cif-save-btn').onclick = () => saveNewCustInv(cid);
+  openModal('modal-cust-inv-form');
+}
+
+function saveNewCustInv(cid) {
+  const c = getCust(cid); if (!c) return;
+  const name = document.getElementById('cif-name').value.trim();
+  if (!name) { alert('שם מוצר חובה'); return; }
+  if (!c.inventory) c.inventory = [];
+  c.inventory.push({
+    id: uid(), name,
+    category: document.getElementById('cif-cat').value,
+    qty: Number(document.getElementById('cif-qty').value) || 0,
+    minQty: Number(document.getElementById('cif-min').value) || 0,
+    salePrice: Number(document.getElementById('cif-price').value) || 0,
+    expiry: document.getElementById('cif-exp').value,
+    notes: document.getElementById('cif-notes').value.trim(),
+    created: today()
+  });
+  save(); renderAll(); closeModal('modal-cust-inv-form');
+  setTimeout(() => openCustDetail(cid), 200);
+  showToast('מוצר נוסף ✅');
+}
+
+function saveCustInvEdit(cid, iid) {
+  const c = getCust(cid); if (!c) return;
+  const item = (c.inventory || []).find(x => x.id === iid); if (!item) return;
+  const name = document.getElementById('cif-name').value.trim();
+  if (!name) { alert('שם מוצר חובה'); return; }
+  item.name = name;
+  item.category = document.getElementById('cif-cat').value;
+  item.qty = Number(document.getElementById('cif-qty').value) || 0;
+  item.minQty = Number(document.getElementById('cif-min').value) || 0;
+  item.salePrice = Number(document.getElementById('cif-price').value) || 0;
+  item.expiry = document.getElementById('cif-exp').value;
+  item.notes = document.getElementById('cif-notes').value.trim();
+  save(); renderAll(); closeModal('modal-cust-inv-form');
+  setTimeout(() => openCustDetail(cid), 200);
+  showToast('מוצר עודכן ✅');
+}
+
+// ===================== ORDERS (per customer) =====================
 function renderOrders() {
-  let list = [...DB.orders].sort((a, b) => b.created > a.created ? 1 : -1);
+  let list = [];
+  DB.customers.forEach(c => {
+    (c.orders || []).forEach(o => list.push({ ...o, custName: c.name, custId: c.id }));
+  });
+  list.sort((a, b) => b.created > a.created ? 1 : -1);
   if (curTab.ord === 'pending') list = list.filter(o => o.status === 'pending');
   if (curTab.ord === 'delivered') list = list.filter(o => o.status === 'delivered');
 
-  const pending = DB.orders.filter(o => o.status === 'pending').length;
-  const todayOrds = DB.orders.filter(o => o.deliverDate === today()).length;
+  const pending = list.filter(o => o.status === 'pending').length;
+  const todayOrds = list.filter(o => o.deliverDate === today() || o.created === today()).length;
   document.getElementById('ord-pending').textContent = pending;
   document.getElementById('ord-today').textContent = todayOrds;
 
   document.getElementById('ord-list').innerHTML = list.length
     ? list.map(o => ordCardHtml(o)).join('')
-    : '<div class="empty"><div class="empty-icon">🛒</div><div class="empty-title">אין הזמנות</div><div class="empty-sub">לחץ + להזמנה חדשה</div></div>';
+    : '<div class="empty"><div class="empty-icon">🛒</div><div class="empty-title">אין הזמנות</div><div class="empty-sub">פתח לקוח וצור הזמנה</div></div>';
 }
 
 function ordCardHtml(o) {
@@ -1472,7 +1557,7 @@ function ordCardHtml(o) {
   const statusLabel = { pending: 'ממתין', delivered: 'נמסר', cancelled: 'בוטל' };
   const statusColor = { pending: 'cy', delivered: 'cg', cancelled: 'cr' };
   const total = (o.items || []).reduce((s, i) => s + (Number(i.qty) * Number(i.price || 0)), 0);
-  return `<div class="ord-card ${o.status}" onclick="openOrdDetail('${o.id}')">
+  return `<div class="ord-card ${o.status}" onclick="openOrdDetail('${o.custId}','${o.id}')">
     <div class="crow">
       <div style="flex:1">
         <div style="font-size:14px;font-weight:800">${c ? c.name : '—'}</div>
@@ -1487,100 +1572,108 @@ function ordCardHtml(o) {
   </div>`;
 }
 
-let orderItems = [];
-function openAddOrder() {
-  orderItems = [];
-  const sel = document.getElementById('ord-cust');
-  sel.innerHTML = DB.customers.filter(c => c.active).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  document.getElementById('ord-date').value = today();
-  document.getElementById('ord-deliver-date').value = '';
-  document.getElementById('ord-notes').value = '';
-  document.getElementById('ord-items-list').innerHTML = '';
-  document.getElementById('ord-total-preview').style.display = 'none';
-  openModal('modal-add-order');
+let activeOrderCid = null, activeOrderItems = [];
+
+function openAddCustOrder(cid) {
+  activeOrderCid = cid;
+  activeOrderItems = [];
+  const c = getCust(cid); if (!c) return;
+  const inv = c.inventory || [];
+  document.getElementById('cord-title').textContent = '📋 הזמנה — ' + c.name;
+  document.getElementById('cord-date').value = today();
+  document.getElementById('cord-deliver-date').value = '';
+  document.getElementById('cord-notes').value = '';
+  document.getElementById('cord-items-list').innerHTML = '';
+  document.getElementById('cord-total-preview').style.display = 'none';
+  document.getElementById('cord-inv-notice').style.display = inv.length ? 'none' : 'block';
+  openModal('modal-cust-order');
+  if (inv.length > 0) addCustOrderItem(); // auto-add first row
 }
 
-function addOrderItem() {
-  const invOpts = DB.inventory.map(i => `<option value="${i.id}" data-price="${i.salePrice || 0}">${i.name}</option>`).join('');
+function addCustOrderItem() {
+  const cid = activeOrderCid;
+  const c = getCust(cid); if (!c) return;
+  const inv = c.inventory || [];
+  const invOpts = inv.map(i => `<option value="${i.id}" data-price="${i.salePrice || 0}" data-qty="${i.qty}">${i.name}${i.qty > 0 ? ' (' + i.qty + ' יח\\')' : ''}</option>`).join('');
   const itemId = uid();
-  orderItems.push({ itemId });
-  const wrap = document.getElementById('ord-items-list');
+  activeOrderItems.push({ itemId });
+  const wrap = document.getElementById('cord-items-list');
   const div = document.createElement('div');
-  div.id = 'oi-' + itemId;
+  div.id = 'coi-' + itemId;
   div.style.cssText = 'display:grid;grid-template-columns:1fr auto auto;gap:6px;margin-bottom:8px;align-items:center';
   div.innerHTML = `
-    <select class="fi" id="oi-prod-${itemId}" style="font-size:13px">
+    <select class="fi" id="coi-prod-${itemId}" style="font-size:13px" onchange="calcCustOrderTotal()">
       <option value="">בחר מוצר...</option>
       ${invOpts}
     </select>
-    <input class="fi qty-input" id="oi-qty-${itemId}" type="number" value="1" min="1" oninput="calcOrderTotal()">
-    <button onclick="removeOrderItem('${itemId}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--rd);border-radius:10px;padding:8px;cursor:pointer;font-size:14px">✕</button>
-  `;
+    <input class="fi qty-input" id="coi-qty-${itemId}" type="number" value="1" min="1" style="width:64px" oninput="calcCustOrderTotal()">
+    <button onclick="removeCustOrderItem('${itemId}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--rd);border-radius:10px;padding:8px;cursor:pointer;font-size:14px">✕</button>`;
   wrap.appendChild(div);
-  calcOrderTotal();
+  calcCustOrderTotal();
 }
 
-function removeOrderItem(itemId) {
-  orderItems = orderItems.filter(x => x.itemId !== itemId);
-  const el = document.getElementById('oi-' + itemId);
-  if (el) el.remove();
-  calcOrderTotal();
+function removeCustOrderItem(itemId) {
+  activeOrderItems = activeOrderItems.filter(x => x.itemId !== itemId);
+  const el = document.getElementById('coi-' + itemId); if (el) el.remove();
+  calcCustOrderTotal();
 }
 
-function calcOrderTotal() {
+function calcCustOrderTotal() {
+  const c = getCust(activeOrderCid); if (!c) return;
+  const inv = c.inventory || [];
   let total = 0;
-  orderItems.forEach(({ itemId }) => {
-    const sel = document.getElementById('oi-prod-' + itemId);
-    const qtyEl = document.getElementById('oi-qty-' + itemId);
+  activeOrderItems.forEach(({ itemId }) => {
+    const sel = document.getElementById('coi-prod-' + itemId);
+    const qtyEl = document.getElementById('coi-qty-' + itemId);
     if (!sel || !qtyEl) return;
     const opt = sel.selectedOptions[0];
     const price = opt ? Number(opt.dataset.price || 0) : 0;
     const qty = Number(qtyEl.value) || 0;
     total += price * qty;
   });
-  const prev = document.getElementById('ord-total-preview');
-  const val = document.getElementById('ord-total-val');
-  if (orderItems.length > 0) { prev.style.display = 'block'; val.textContent = fmt(total); }
+  const prev = document.getElementById('cord-total-preview');
+  const val = document.getElementById('cord-total-val');
+  if (activeOrderItems.length > 0) { prev.style.display = 'block'; val.textContent = fmt(total); }
   else prev.style.display = 'none';
 }
 
-function saveOrder() {
-  const custId = document.getElementById('ord-cust').value;
-  if (!custId) { alert('נא לבחור לקוח'); return; }
-  if (orderItems.length === 0) { alert('יש להוסיף לפחות פריט אחד'); return; }
-
+function saveCustOrder() {
+  const cid = activeOrderCid;
+  const c = getCust(cid); if (!c) return;
+  if (activeOrderItems.length === 0) { alert('יש להוסיף לפחות פריט אחד'); return; }
+  const inv = c.inventory || [];
   const items = [];
   let valid = true;
-  orderItems.forEach(({ itemId }) => {
-    const sel = document.getElementById('oi-prod-' + itemId);
-    const qtyEl = document.getElementById('oi-qty-' + itemId);
+  activeOrderItems.forEach(({ itemId }) => {
+    const sel = document.getElementById('coi-prod-' + itemId);
+    const qtyEl = document.getElementById('coi-qty-' + itemId);
     if (!sel || !sel.value) { alert('נא לבחור מוצר לכל שורה'); valid = false; return; }
-    const invItem = DB.inventory.find(x => x.id === sel.value);
+    const invItem = inv.find(x => x.id === sel.value);
     if (!invItem) return;
     items.push({ productId: sel.value, name: invItem.name, qty: Number(qtyEl.value) || 1, price: invItem.salePrice || 0 });
   });
   if (!valid) return;
-
-  DB.orders.push({
-    id: uid(), custId,
+  if (!c.orders) c.orders = [];
+  const ordId = uid();
+  c.orders.push({
+    id: ordId, custId: cid,
     created: today(),
-    deliverDate: document.getElementById('ord-deliver-date').value,
-    notes: document.getElementById('ord-notes').value.trim(),
+    deliverDate: document.getElementById('cord-deliver-date').value,
+    notes: document.getElementById('cord-notes').value.trim(),
     status: 'pending', items
   });
-  save(); renderAll(); closeModal('modal-add-order');
+  save(); renderAll(); closeModal('modal-cust-order');
   showToast('הזמנה נוצרה ✅');
+  setTimeout(() => openCustDetail(cid), 200);
 }
 
-function openOrdDetail(oid) {
-  activeOrdId = oid;
-  const o = DB.orders.find(x => x.id === oid);
-  if (!o) return;
-  const c = getCust(o.custId);
+function openOrdDetail(cid, oid) {
+  const c = getCust(cid); if (!c) return;
+  const o = (c.orders || []).find(x => x.id === oid); if (!o) return;
   const total = (o.items || []).reduce((s, i) => s + (Number(i.qty) * Number(i.price || 0)), 0);
-  document.getElementById('ordd-title').textContent = '📋 הזמנה — ' + (c ? c.name : '');
+  document.getElementById('ordd-title').textContent = '📋 הזמנה — ' + c.name;
   document.getElementById('ordd-body').innerHTML = `
-    <div class="dkv"><span class="dk">לקוח</span><span class="dv">${c ? c.name : '—'}</span></div>
+    <div class="dkv"><span class="dk">לקוח</span><span class="dv">${c.name}</span></div>
     <div class="dkv"><span class="dk">תאריך הזמנה</span><span class="dv">${fmtDate(o.created)}</span></div>
     <div class="dkv"><span class="dk">תאריך מסירה</span><span class="dv">${o.deliverDate ? fmtDate(o.deliverDate) : '—'}</span></div>
     <div class="dkv"><span class="dk">סטטוס</span><span class="dv"><span class="chip ${o.status === 'pending' ? 'cy' : o.status === 'delivered' ? 'cg' : 'cr'}">${o.status === 'pending' ? 'ממתין' : o.status === 'delivered' ? 'נמסר' : 'בוטל'}</span></span></div>
@@ -1593,33 +1686,99 @@ function openOrdDetail(oid) {
     ${total > 0 ? `<div style="display:flex;justify-content:space-between;padding:12px 0;font-weight:900"><span>סה"כ</span><span style="color:var(--ac)">${fmt(total)}</span></div>` : ''}
     ${o.notes ? `<div style="font-size:12px;color:var(--t2);margin-top:8px">הערות: ${o.notes}</div>` : ''}
     ${o.status === 'pending' ? `
-      <button class="btnp" onclick="markOrderDelivered('${o.id}')">✅ סמן כנמסר</button>
-      <button class="btnd" onclick="cancelOrder('${o.id}')">🗑️ בטל הזמנה</button>
-    ` : ''}
-  `;
+      <button class="btnp" onclick="markCustOrderDelivered('${cid}','${oid}')">✅ סמן כנמסר + עדכן מלאי</button>
+      <button class="btnd" onclick="cancelCustOrder('${cid}','${oid}')">🗑️ בטל הזמנה</button>
+    ` : ''}`;
   openModal('modal-ord-detail');
 }
 
-function markOrderDelivered(oid) {
-  const o = DB.orders.find(x => x.id === oid);
-  if (!o) return;
+function markCustOrderDelivered(cid, oid) {
+  const c = getCust(cid); if (!c) return;
+  const o = (c.orders || []).find(x => x.id === oid); if (!o) return;
   o.status = 'delivered';
   o.deliveredDate = today();
-  // Reduce inventory
+  // Update inventory quantities
   (o.items || []).forEach(item => {
-    const invItem = DB.inventory.find(x => x.id === item.productId);
+    const invItem = (c.inventory || []).find(x => x.id === item.productId);
     if (invItem) invItem.qty = Math.max(0, Number(invItem.qty) - Number(item.qty));
   });
+  // Create debt automatically
+  const total = (o.items || []).reduce((s, i) => s + (Number(i.qty) * Number(i.price || 0)), 0);
+  if (total > 0) {
+    const docnum = 'ORD-' + oid.substr(1, 6).toUpperCase();
+    DB.debts.push({ id: uid(), custId: cid, amount: total, docnum, date: today(), desc: 'הזמנה ' + (o.items || []).map(i => i.name + '×' + i.qty).join(', ') });
+    showToast('נמסר ✅ · חוב ' + fmt(total) + ' נרשם');
+  } else {
+    showToast('הזמנה נמסרה ✅');
+  }
   save(); renderAll(); closeModal('modal-ord-detail');
-  showToast('הזמנה נמסרה ✅');
+  setTimeout(() => openCustDetail(cid), 200);
 }
 
-function cancelOrder(oid) {
+function cancelCustOrder(cid, oid) {
   if (!confirm('לבטל הזמנה זו?')) return;
-  const o = DB.orders.find(x => x.id === oid);
-  if (o) o.status = 'cancelled';
+  const c = getCust(cid); if (!c) return;
+  const o = (c.orders || []).find(x => x.id === oid); if (!o) return;
+  o.status = 'cancelled';
   save(); renderAll(); closeModal('modal-ord-detail');
   showToast('הזמנה בוטלה');
+}
+
+function setCustDetailTab(tab) {
+  ['info','inv','orders','debts'].forEach(t => {
+    document.getElementById('cd-tab-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('cdt-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'inv') renderCustDetailInv(activeCid);
+  if (tab === 'orders') renderCustDetailOrders(activeCid);
+}
+
+function renderCustDetailInv(cid) {
+  const c = getCust(cid); if (!c) return;
+  const inv = c.inventory || [];
+  document.getElementById('cd-inventory').innerHTML = inv.length
+    ? inv.map(item => {
+        const qty = Number(item.qty);
+        const minQty = Number(item.minQty || 0);
+        const isLow = minQty > 0 && qty <= minQty;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--br);cursor:pointer" onclick="openCustInvItem('${cid}','${item.id}')">
+          <div style="font-size:22px">${catIcons[item.category] || '📦'}</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700">${item.name}</div>
+            ${item.expiry ? `<div style="font-size:10px;color:var(--t2)">תפוגה: ${fmtDate(item.expiry)}</div>` : ''}
+          </div>
+          <div style="text-align:left">
+            <div style="font-size:18px;font-weight:900;color:${isLow ? 'var(--rd)' : 'var(--gr)'}">${qty}</div>
+            ${item.salePrice ? `<div style="font-size:10px;color:var(--t2)">${fmt(item.salePrice)}</div>` : ''}
+          </div>
+          ${isLow ? '<span class="chip cr" style="font-size:9px">נמוך</span>' : ''}
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--t3);font-size:13px;padding:12px 0;text-align:center">אין מוצרים — לחץ "+ הוסף מוצר"</div>';
+}
+
+function renderCustDetailOrders(cid) {
+  const c = getCust(cid); if (!c) return;
+  const orders = (c.orders || []).sort((a, b) => b.created > a.created ? 1 : -1);
+  document.getElementById('cd-orders').innerHTML = orders.length
+    ? orders.map(o => {
+        const total = (o.items || []).reduce((s, i) => s + (Number(i.qty) * Number(i.price || 0)), 0);
+        const statusLabel = { pending: 'ממתין', delivered: 'נמסר', cancelled: 'בוטל' };
+        const statusColor = { pending: 'cy', delivered: 'cg', cancelled: 'cr' };
+        return `<div style="background:var(--s2);border:1px solid var(--br);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer" onclick="openOrdDetail('${cid}','${o.id}')">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:13px;font-weight:700">${fmtDate(o.created)}</div>
+              <div style="font-size:11px;color:var(--t2)">${(o.items || []).map(i => i.name + '×' + i.qty).join(', ')}</div>
+            </div>
+            <div style="text-align:left">
+              ${total > 0 ? `<div style="font-size:14px;font-weight:900;color:var(--ac)">${fmt(total)}</div>` : ''}
+              <span class="chip ${statusColor[o.status] || 'cb'}" style="font-size:10px">${statusLabel[o.status] || o.status}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--t3);font-size:13px;padding:12px 0;text-align:center">אין הזמנות — לחץ "+ הזמנה חדשה"</div>';
 }
 
 // ===================== CUSTOMER DETAIL =====================
@@ -1637,6 +1796,9 @@ function openCustDetail(cid) {
     <button class="abtn" onclick="openVisitUpdate('${cid}')"><span>📸</span>ביקור</button>
     <button class="abtn" onclick="sendWA('${cid}')"><span>💬</span>WhatsApp</button>
     <button class="abtn" onclick="callCust('${cid}')"><span>📞</span>התקשר</button>`;
+
+  // Reset to info tab
+  setCustDetailTab('info');
   document.getElementById('cd-info').innerHTML = `
     <div class="dkv"><span class="dk">טלפון</span><span class="dv"><a href="tel:${c.phone}" style="color:var(--ac)">${c.phone}</a></span></div>
     <div class="dkv"><span class="dk">עיר</span><span class="dv">${c.city || '—'}</span></div>
@@ -1960,10 +2122,16 @@ function openReport() {
     <div class="rep-row"><span class="rep-l">גבוי החודש</span><span class="rep-v" style="color:var(--gr)">${fmt(paid)}</span></div>
     <div class="rep-row"><span class="rep-l">לקוחות חייבים</span><span class="rep-v">${debtors.length}</span></div>
     <div class="rep-row"><span class="rep-l">דחופים 60+ יום</span><span class="rep-v" style="color:var(--rd)">${urgent.length}</span></div>
-    <div class="rep-row"><span class="rep-l">ציוד בשטח</span><span class="rep-v">${DB.equipment.length}</span></div>
-    <div class="rep-row"><span class="rep-l">מוצרים במלאי</span><span class="rep-v">${DB.inventory.length}</span></div>
-    <div class="rep-row"><span class="rep-l">מלאי נמוך</span><span class="rep-v" style="color:var(--rd)">${DB.inventory.filter(i => Number(i.qty) <= Number(i.minQty || 10)).length}</span></div>
-    <div class="rep-row"><span class="rep-l">הזמנות ממתינות</span><span class="rep-v" style="color:var(--yw)">${DB.orders.filter(o => o.status === 'pending').length}</span></div>
+    <div class="rep-row"><span class="rep-l">ציוד בשטח</span><span class="rep-v">${DB.equipment.length}</span></div>`;
+  let totalInvItems = 0, lowInvItems = 0, pendingOrds = 0;
+  DB.customers.forEach(c => {
+    (c.inventory || []).forEach(i => { totalInvItems++; if (Number(i.qty) <= Number(i.minQty || 0) && Number(i.minQty || 0) > 0) lowInvItems++; });
+    (c.orders || []).forEach(o => { if (o.status === 'pending') pendingOrds++; });
+  });
+  document.getElementById('report-body').innerHTML += `
+    <div class="rep-row"><span class="rep-l">סה"כ פריטי מלאי</span><span class="rep-v">${totalInvItems}</span></div>
+    <div class="rep-row"><span class="rep-l">מלאי נמוך</span><span class="rep-v" style="color:var(--rd)">${lowInvItems}</span></div>
+    <div class="rep-row"><span class="rep-l">הזמנות ממתינות</span><span class="rep-v" style="color:var(--yw)">${pendingOrds}</span></div>
     <div class="rep-total"><span style="font-size:13px;color:var(--t2);font-weight:600">סה"כ חוב כולל</span><span style="font-size:22px;font-weight:900;color:var(--rd)">${fmt(td + teq)}</span></div>
     ${urgent.length ? `<div class="sh" style="margin-top:16px"><span class="st">דחופים לטיפול</span></div>${urgent.slice(0, 5).map(c => `<div class="rep-row"><span class="rep-l">${c.name}</span><span class="rep-v" style="color:var(--rd)">${fmt(totalDebt(c.id))}</span></div>`).join('')}` : ''}`;
   openModal('modal-report');
@@ -2082,6 +2250,7 @@ function deleteActiveCust() {
   DB.debts = DB.debts.filter(d => d.custId !== activeCid);
   DB.payments = DB.payments.filter(p => p.custId !== activeCid);
   DB.equipment = DB.equipment.filter(e => e.custId !== activeCid);
+  DB.visits = (DB.visits || []).filter(v => v.custId !== activeCid);
   save(); closeModal('modal-cust-detail'); renderAll(); showToast('לקוח נמחק');
 }
 
@@ -2359,16 +2528,18 @@ function exportCSV(type) {
     [...DB.debts].sort((a, b) => b.date.localeCompare(a.date)).forEach(d => { const c = getCust(d.custId); rows.push(csvRow([c ? c.name : '—', d.docnum || '', d.amount, d.date, d.desc || '', daysDiff(d.date)])); });
     downloadCSV('חובות_' + d + '.csv', rows); showToast('יצוא חובות ✅');
   } else if (type === 'inventory') {
-    const rows = [csvRow(['שם מוצר', 'קטגוריה', 'כמות', 'מינימום', 'מחיר עלות', 'מחיר מכירה', 'תפוגה'])];
-    DB.inventory.forEach(i => rows.push(csvRow([i.name, catNames[i.category] || '', i.qty, i.minQty || 10, i.costPrice || 0, i.salePrice || 0, i.expiry || ''])));
+    const rows = [csvRow(['לקוח', 'שם מוצר', 'קטגוריה', 'כמות', 'מינימום', 'מחיר', 'תפוגה'])];
+    DB.customers.forEach(c => {
+      (c.inventory || []).forEach(i => rows.push(csvRow([c.name, i.name, catNames[i.category] || '', i.qty, i.minQty || 0, i.salePrice || 0, i.expiry || ''])));
+    });
     downloadCSV('מלאי_' + d + '.csv', rows); showToast('יצוא מלאי ✅');
   } else if (type === 'all') {
     const rows = [csvRow(['=== לקוחות ==='])];
     rows.push(csvRow(['שם', 'טלפון', 'עיר', 'תנאים', 'חוב']));
     DB.customers.filter(c => c.active).forEach(c => rows.push(csvRow([c.name, c.phone, c.city || '', c.terms ? 'שוטף ' + c.terms : '', totalDebt(c.id)])));
     rows.push(csvRow([''])); rows.push(csvRow(['=== מלאי ===']));
-    rows.push(csvRow(['מוצר', 'כמות', 'מינימום']));
-    DB.inventory.forEach(i => rows.push(csvRow([i.name, i.qty, i.minQty || 10])));
+    rows.push(csvRow(['לקוח', 'מוצר', 'כמות', 'מינימום']));
+    DB.customers.forEach(c => { (c.inventory || []).forEach(i => rows.push(csvRow([c.name, i.name, i.qty, i.minQty || 0]))); });
     downloadCSV('CRM_מלא_' + d + '.csv', rows); showToast('יצוא מלא ✅');
   }
   closeModal('modal-export');

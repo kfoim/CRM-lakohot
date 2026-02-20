@@ -1594,7 +1594,7 @@ function addCustOrderItem() {
   const cid = activeOrderCid;
   const c = getCust(cid); if (!c) return;
   const inv = c.inventory || [];
-  const invOpts = inv.map(i => `<option value="${i.id}" data-price="${i.salePrice || 0}" data-qty="${i.qty}">${i.name}${i.qty > 0 ? ' (' + i.qty + ' יח\\')' : ''}</option>`).join('');
+  const invOpts = inv.map(i => `<option value="${i.id}" data-price="${i.salePrice || 0}" data-qty="${i.qty}">${i.name}${i.qty > 0 ? ' (' + i.qty + ' יח)' : ''}</option>`).join('');
   const itemId = uid();
   activeOrderItems.push({ itemId });
   const wrap = document.getElementById('cord-items-list');

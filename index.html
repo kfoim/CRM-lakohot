@@ -298,11 +298,12 @@ textarea.fi { resize: none; }
 }
 
 /* ACTION ROW */
-.arow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 4px; width: 100%; }
+.arow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; width: 100%; }
 .abtn {
-  padding: 10px 4px; border-radius: 13px; border: 1px solid var(--br);
+  padding: 10px 6px; border-radius: 13px; border: 1px solid var(--br);
   background: var(--s2); color: var(--tx); font-size: 11px; font-weight: 700;
-  display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
+  flex: 1 1 calc(25% - 6px); min-width: 64px; max-width: calc(25% - 6px);
   transition: all .15s;
 }
 .abtn:active { background: var(--s3); transform: scale(.96); }
@@ -528,8 +529,9 @@ textarea.fi { resize: none; }
 <div class="page" id="pg-inv">
   <div class="sgrid">
     <div class="sbox r"><div class="sv r" id="inv-low">0</div><div class="sl">מלאי נמוך</div></div>
-    <div class="sbox g"><div class="sv g" id="inv-ok">0</div><div class="sl">פריטים תקינים</div></div>
+    <div class="sbox b"><div class="sv b" id="inv-total-prods">0</div><div class="sl">סה"כ מוצרים</div></div>
   </div>
+  <div id="inv-alerts-section"></div>
   <div class="sbar">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     <input type="text" placeholder="חיפוש מוצר..." id="inv-search" oninput="renderInventory()">
@@ -617,6 +619,10 @@ textarea.fi { resize: none; }
   <div class="ni" onclick="goPage('hist',this)" id="ni-hist">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
     <em>היסטוריה</em>
+  </div>
+  <div class="ni" onclick="goPage('monthly',this)" id="ni-monthly">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <em>גבייה</em>
   </div>
 </nav>
 

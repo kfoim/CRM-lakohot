@@ -236,6 +236,8 @@ body::before {
 /* OVERLAY / SHEET */
 .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200; align-items: flex-end; justify-content: center; backdrop-filter: blur(4px); }
 .overlay.open { display: flex; }
+.overlay.layer2 { z-index: 400; }
+.overlay.layer3 { z-index: 600; }
 .sheet {
   background: var(--sf); border-radius: 22px 22px 0 0;
   width: 100%; max-width: 430px; max-height: 92vh; overflow-y: auto;
@@ -687,7 +689,7 @@ textarea.fi { resize: none; }
 
 <!-- EDIT CUSTOMER -->
 
-<div class="overlay" id="modal-edit-cust">
+<div class="overlay layer2" id="modal-edit-cust">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shead"><span class="stitle">✏️ עריכת לקוח</span><button class="xbtn" onclick="closeModal('modal-edit-cust')">✕</button></div>
@@ -748,7 +750,7 @@ textarea.fi { resize: none; }
 
 <!-- ADD EQUIPMENT -->
 
-<div class="overlay" id="modal-add-eq">
+<div class="overlay layer2" id="modal-add-eq">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shead"><span class="stitle">📦 ציוד חדש</span><button class="xbtn" onclick="closeModal('modal-add-eq')">✕</button></div>
@@ -788,7 +790,7 @@ textarea.fi { resize: none; }
 
 <!-- CUSTOMER INVENTORY ITEM DETAIL -->
 
-<div class="overlay" id="modal-cust-inv-item">
+<div class="overlay layer2" id="modal-cust-inv-item">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shead"><span class="stitle" id="cii-title">מוצר</span><button class="xbtn" onclick="closeModal('modal-cust-inv-item')">✕</button></div>
@@ -798,7 +800,7 @@ textarea.fi { resize: none; }
 
 <!-- CUSTOMER INVENTORY FORM (add/edit) -->
 
-<div class="overlay" id="modal-cust-inv-form">
+<div class="overlay layer2" id="modal-cust-inv-form">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shead"><span class="stitle">📦 מוצר ברשימת לקוח</span><button class="xbtn" onclick="closeModal('modal-cust-inv-form')">✕</button></div>
@@ -827,7 +829,7 @@ textarea.fi { resize: none; }
 
 <!-- CUSTOMER ORDER FORM -->
 
-<div class="overlay" id="modal-cust-order">
+<div class="overlay layer2" id="modal-cust-order">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shead"><span class="stitle" id="cord-title">📋 הזמנה חדשה</span><button class="xbtn" onclick="closeModal('modal-cust-order')">✕</button></div>
@@ -856,7 +858,7 @@ textarea.fi { resize: none; }
 
 <!-- ORDER DETAIL -->
 
-<div class="overlay" id="modal-ord-detail">
+<div class="overlay layer2" id="modal-ord-detail">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shead"><span class="stitle" id="ordd-title">פרטי הזמנה</span><button class="xbtn" onclick="closeModal('modal-ord-detail')">✕</button></div>
@@ -866,7 +868,7 @@ textarea.fi { resize: none; }
 
 <!-- PAYMENT -->
 
-<div class="overlay" id="modal-payment">
+<div class="overlay layer2" id="modal-payment">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shead"><span class="stitle">💰 רישום תשלום</span><button class="xbtn" onclick="closeModal('modal-payment')">✕</button></div>
@@ -899,7 +901,7 @@ textarea.fi { resize: none; }
 
 <!-- ADD DEBT -->
 
-<div class="overlay" id="modal-add-debt">
+<div class="overlay layer2" id="modal-add-debt">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shead"><span class="stitle">📋 הוספת חוב</span><button class="xbtn" onclick="closeModal('modal-add-debt')">✕</button></div>
@@ -988,7 +990,7 @@ textarea.fi { resize: none; }
 
 <!-- VISIT MODAL -->
 
-<div class="overlay" id="modal-visit">
+<div class="overlay layer2" id="modal-visit">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shead"><span class="stitle">📸 עדכון ביקור</span><button class="xbtn" onclick="closeModal('modal-visit')">✕</button></div>
@@ -1012,7 +1014,7 @@ textarea.fi { resize: none; }
 
 <!-- CUSTOMER HISTORY MODAL -->
 
-<div class="overlay" id="modal-cust-hist">
+<div class="overlay layer2" id="modal-cust-hist">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shead"><span class="stitle" id="ch-title">היסטוריה</span><button class="xbtn" onclick="closeModal('modal-cust-hist')">✕</button></div>
@@ -1177,7 +1179,21 @@ function goPage(name, el) {
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => {
+  if (e.target === o) {
+    // Only close the topmost open overlay
+    const allOpen = [...document.querySelectorAll('.overlay.open')];
+    if (allOpen.length === 0) return;
+    // Find highest z-index open overlay
+    let top = allOpen[0];
+    allOpen.forEach(ov => {
+      const z = parseInt(getComputedStyle(ov).zIndex) || 0;
+      const topZ = parseInt(getComputedStyle(top).zIndex) || 0;
+      if (z > topZ) top = ov;
+    });
+    if (top === o) o.classList.remove('open');
+  }
+}));
 
 function openAddModal() {
   if (curPage === 'cust') openModal('modal-add-cust');
@@ -1455,8 +1471,8 @@ function adjustCustInv(cid, iid, dir) {
   if (val === null || isNaN(val)) return;
   item.qty = Math.max(0, Number(item.qty) + (dir > 0 ? Number(val) : -Number(val)));
   save(); renderAll(); closeModal('modal-cust-inv-item');
-  setTimeout(() => openCustDetail(cid), 200);
   showToast(dir > 0 ? `+${val} יחידות נוספו ✅` : `-${val} יחידות הוצאו`);
+  if (document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailInv(cid); }
 }
 
 function editCustInvItem(cid, iid) {
@@ -1471,7 +1487,7 @@ function editCustInvItem(cid, iid) {
   document.getElementById('cif-notes').value = item.notes || '';
   document.getElementById('cif-save-btn').onclick = () => saveCustInvEdit(cid, iid);
   closeModal('modal-cust-inv-item');
-  setTimeout(() => openModal('modal-cust-inv-form'), 200);
+  openModal('modal-cust-inv-form');
 }
 
 function deleteCustInvItem(cid, iid) {
@@ -1479,8 +1495,8 @@ function deleteCustInvItem(cid, iid) {
   const c = getCust(cid); if (!c) return;
   c.inventory = (c.inventory || []).filter(x => x.id !== iid);
   save(); renderAll(); closeModal('modal-cust-inv-item');
-  setTimeout(() => openCustDetail(cid), 200);
   showToast('מוצר נמחק');
+  if (document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailInv(cid); }
 }
 
 function openAddCustInv(cid) {
@@ -1511,8 +1527,8 @@ function saveNewCustInv(cid) {
     created: today()
   });
   save(); renderAll(); closeModal('modal-cust-inv-form');
-  setTimeout(() => openCustDetail(cid), 200);
   showToast('מוצר נוסף ✅');
+  if (document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailInv(cid); }
 }
 
 function saveCustInvEdit(cid, iid) {
@@ -1528,8 +1544,8 @@ function saveCustInvEdit(cid, iid) {
   item.expiry = document.getElementById('cif-exp').value;
   item.notes = document.getElementById('cif-notes').value.trim();
   save(); renderAll(); closeModal('modal-cust-inv-form');
-  setTimeout(() => openCustDetail(cid), 200);
   showToast('מוצר עודכן ✅');
+  if (document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailInv(cid); }
 }
 
 // ===================== ORDERS (per customer) =====================
@@ -1670,7 +1686,7 @@ function saveCustOrder() {
   renderAll();
   closeModal('modal-cust-order');
   showToast('הזמנה נוצרה ✅ — אשר מסירה לעדכון מלאי וחוב');
-  setTimeout(() => { openCustDetail(cid); setCustDetailTab('orders'); }, 250);
+  if (document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailOrders(cid); setCustDetailTab('orders'); }
 }
 
 function openOrdDetail(cid, oid) {
@@ -1745,7 +1761,7 @@ function markCustOrderDelivered(cid, oid) {
   }
 
   save(); renderAll(); closeModal('modal-ord-detail');
-  setTimeout(() => { openCustDetail(cid); setCustDetailTab('debts'); }, 250);
+  if (document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailOrders(cid); renderCustDetailDebts(cid); setCustDetailTab('debts'); }
 }
 
 function cancelCustOrder(cid, oid) {
@@ -1755,6 +1771,7 @@ function cancelCustOrder(cid, oid) {
   o.status = 'cancelled';
   save(); renderAll(); closeModal('modal-ord-detail');
   showToast('הזמנה בוטלה');
+  if (document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailOrders(cid); }
 }
 
 function setCustDetailTab(tab) {
@@ -1963,8 +1980,7 @@ function openPaymentModal(cid) {
       return `<option value="${d.id}">#${d.docnum || ''} | נותר: ${fmt(remaining)}${d.desc ? ' | ' + d.desc : ''}</option>`;
     }).join('');
   }
-  closeModal('modal-cust-detail');
-  setTimeout(() => openModal('modal-payment'), 250);
+  openModal('modal-payment');
 }
 
 function onPayMethodChange() {
@@ -1994,7 +2010,9 @@ function savePayment() {
     if (!docRef) { alert('מספר מסמך הוא חובה לזיכוי'); return; }
     DB.debts.push({ id: uid(), custId: activeCid, amount: -Math.abs(amt), docnum: docRef, date: payDate, desc: 'זיכוי' + (note ? ' — ' + note : ''), isCredit: true, closed: true });
     save(); renderAll(); closeModal('modal-payment');
-    showToast('זיכוי נרשם ✅ ' + fmt(amt)); return;
+    showToast('זיכוי נרשם ✅ ' + fmt(amt));
+    if (activeCid && document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailDebts(activeCid); setCustDetailTab('debts'); }
+    return;
   }
 
   if (docSel) {
@@ -2010,6 +2028,7 @@ function savePayment() {
   DB.payments.push({ id: uid(), custId: activeCid, amount: amt, method, date: payDate, note, check: checkNum, checkDate, linkedDoc: docSel || null });
   save(); renderAll(); closeModal('modal-payment');
   showToast('תשלום נרשם ✅ ' + fmt(amt));
+  if (document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailDebts(activeCid); setCustDetailTab('debts'); }
 }
 
 // ===================== DEBT =====================
@@ -2020,8 +2039,7 @@ function openDebtModal(cid) {
   document.getElementById('ad-date').value = today();
   document.getElementById('ad-amount').value = '';
   document.getElementById('ad-desc').value = '';
-  closeModal('modal-cust-detail');
-  setTimeout(() => openModal('modal-add-debt'), 200);
+  openModal('modal-add-debt');
 }
 
 function openAddDebtGeneral() {
@@ -2043,8 +2061,10 @@ function saveDebt() {
   const sel = document.getElementById('ad-cust-sel');
   const cid = sel ? sel.value : activeCid;
   DB.debts.push({ id: uid(), custId: cid, amount: amt, docnum: docnum.trim(), date: document.getElementById('ad-date').value, desc: document.getElementById('ad-desc').value });
+  const _dcid = activeCid;
   save(); renderAll(); closeModal('modal-add-debt');
   showToast('חוב נוסף ✅');
+  if (_dcid && document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailDebts(_dcid); setCustDetailTab('debts'); }
 }
 
 // ===================== SAVE CUSTOMER =====================
@@ -2090,8 +2110,7 @@ function openEditCust(cid) {
   document.getElementById('ec-route').value = cust.route || '';
   document.getElementById('ec-visit-freq').value = cust.visitFreq || '';
   document.getElementById('ec-visit-day').value = cust.visitDay || '';
-  closeModal('modal-cust-detail');
-  setTimeout(() => openModal('modal-edit-cust'), 250);
+  openModal('modal-edit-cust');
 }
 
 function saveEditCust() {
@@ -2113,8 +2132,10 @@ function saveEditCust() {
   cust.visitFreq = document.getElementById('ec-visit-freq').value;
   cust.visitDay = document.getElementById('ec-visit-day').value;
   cust.notes = document.getElementById('ec-notes').value.trim();
+  const _ecid = activeCid;
   save(); renderAll(); closeModal('modal-edit-cust');
   showToast('לקוח עודכן ✅');
+  if (_ecid && document.getElementById('modal-cust-detail').classList.contains('open')) { setTimeout(() => { openCustDetail(_ecid); }, 100); }
 }
 
 // ===================== SAVE EQUIPMENT =====================
@@ -2243,7 +2264,7 @@ function deletePayment(pid, cid) {
   if (!confirm('למחוק תשלום ' + fmt(p.amount) + '?')) return;
   DB.payments = DB.payments.filter(x => x.id !== pid);
   save(); renderAll(); showToast('תשלום נמחק');
-  setTimeout(() => openCustDetail(cid), 200);
+  if (document.getElementById('modal-cust-detail').classList.contains('open')) { openCustDetail(cid); }
 }
 
 // ===================== CUSTOMER HISTORY =====================
@@ -2280,8 +2301,7 @@ function openCustHistory(cid) {
   });
   if (!items.length) html += '<div style="color:var(--t2);text-align:center;padding:20px">אין פעילות</div>';
   document.getElementById('ch-body').innerHTML = html;
-  closeModal('modal-cust-detail');
-  setTimeout(() => openModal('modal-cust-hist'), 250);
+  openModal('modal-cust-hist');
 }
 
 // ===================== DELETE CUSTOMER =====================
@@ -2321,7 +2341,7 @@ function deleteSelectedDebts(cid) {
   const ids = new Set(toDelete.map(d => d.id));
   DB.debts = DB.debts.filter(d => !ids.has(d.id));
   save(); renderAll(); showToast('✅ ' + toDelete.length + ' חובות נמחקו');
-  setTimeout(() => openCustDetail(cid), 200);
+  renderCustDetailDebts(cid);
 }
 
 // ===================== VISIT =====================

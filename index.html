@@ -1641,9 +1641,11 @@ function saveCustOrder() {
   const cid = activeOrderCid;
   const c = getCust(cid); if (!c) return;
   if (activeOrderItems.length === 0) { alert('יש להוסיף לפחות פריט אחד'); return; }
+
   const inv = c.inventory || [];
   const items = [];
   let valid = true;
+
   activeOrderItems.forEach(({ itemId }) => {
     const sel = document.getElementById('coi-prod-' + itemId);
     const qtyEl = document.getElementById('coi-qty-' + itemId);
@@ -1652,19 +1654,23 @@ function saveCustOrder() {
     if (!invItem) return;
     items.push({ productId: sel.value, name: invItem.name, qty: Number(qtyEl.value) || 1, price: invItem.salePrice || 0 });
   });
-  if (!valid) return;
+
+  if (!valid || items.length === 0) return;
+
   if (!c.orders) c.orders = [];
-  const ordId = uid();
   c.orders.push({
-    id: ordId, custId: cid,
+    id: uid(), custId: cid,
     created: today(),
     deliverDate: document.getElementById('cord-deliver-date').value,
     notes: document.getElementById('cord-notes').value.trim(),
     status: 'pending', items
   });
-  save(); renderAll(); closeModal('modal-cust-order');
-  showToast('הזמנה נוצרה ✅');
-  setTimeout(() => openCustDetail(cid), 200);
+
+  save();
+  renderAll();
+  closeModal('modal-cust-order');
+  showToast('הזמנה נוצרה ✅ — אשר מסירה לעדכון מלאי וחוב');
+  setTimeout(() => { openCustDetail(cid); setCustDetailTab('orders'); }, 250);
 }
 
 function openOrdDetail(cid, oid) {
@@ -1686,33 +1692,60 @@ function openOrdDetail(cid, oid) {
     ${total > 0 ? `<div style="display:flex;justify-content:space-between;padding:12px 0;font-weight:900"><span>סה"כ</span><span style="color:var(--ac)">${fmt(total)}</span></div>` : ''}
     ${o.notes ? `<div style="font-size:12px;color:var(--t2);margin-top:8px">הערות: ${o.notes}</div>` : ''}
     ${o.status === 'pending' ? `
-      <button class="btnp" onclick="markCustOrderDelivered('${cid}','${oid}')">✅ סמן כנמסר + עדכן מלאי</button>
+      <div style="background:var(--s2);border-radius:12px;padding:14px;margin-top:8px">
+        <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px">📋 פרטי חוב למסירה</div>
+        <div class="fg"><label class="fl">מספר מסמך *</label><input class="fi" id="ord-docnum-input" placeholder="חשבונית מס׳..." dir="ltr" value=""></div>
+        <div class="fg" style="margin-top:6px"><label class="fl">תאריך חוב</label><input class="fi" id="ord-debt-date" type="date" value="${today()}"></div>
+      </div>
+      <button class="btnp" style="margin-top:12px" onclick="markCustOrderDelivered('${cid}','${oid}')">✅ אשר מסירה + רשום חוב</button>
       <button class="btnd" onclick="cancelCustOrder('${cid}','${oid}')">🗑️ בטל הזמנה</button>
     ` : ''}`;
   openModal('modal-ord-detail');
 }
 
 function markCustOrderDelivered(cid, oid) {
+  const docnum = (document.getElementById('ord-docnum-input')?.value || '').trim();
+  if (!docnum) { alert('נא להזין מספר מסמך'); return; }
+  const debtDate = document.getElementById('ord-debt-date')?.value || today();
+
   const c = getCust(cid); if (!c) return;
   const o = (c.orders || []).find(x => x.id === oid); if (!o) return;
+
+  // Check for duplicate docnum
+  if (DB.debts.find(d => d.docnum === docnum)) {
+    if (!confirm('מספר מסמך ' + docnum + ' כבר קיים. להמשיך?')) return;
+  }
+
   o.status = 'delivered';
   o.deliveredDate = today();
-  // Update inventory quantities
+
+  // Update customer inventory quantities (add what was delivered)
   (o.items || []).forEach(item => {
-    const invItem = (c.inventory || []).find(x => x.id === item.productId);
-    if (invItem) invItem.qty = Math.max(0, Number(invItem.qty) - Number(item.qty));
+    if (!c.inventory) c.inventory = [];
+    const invItem = c.inventory.find(x => x.id === item.productId);
+    if (invItem) {
+      invItem.qty = Number(invItem.qty) + Number(item.qty);
+    }
   });
+
   // Create debt automatically
   const total = (o.items || []).reduce((s, i) => s + (Number(i.qty) * Number(i.price || 0)), 0);
   if (total > 0) {
-    const docnum = 'ORD-' + oid.substr(1, 6).toUpperCase();
-    DB.debts.push({ id: uid(), custId: cid, amount: total, docnum, date: today(), desc: 'הזמנה ' + (o.items || []).map(i => i.name + '×' + i.qty).join(', ') });
-    showToast('נמסר ✅ · חוב ' + fmt(total) + ' נרשם');
+    DB.debts.push({
+      id: uid(),
+      custId: cid,
+      amount: total,
+      docnum: docnum,
+      date: debtDate,
+      desc: 'הזמנה: ' + (o.items || []).map(i => i.name + ' ×' + i.qty).join(', ')
+    });
+    showToast('✅ נמסר · חוב ' + fmt(total) + ' נרשם');
   } else {
-    showToast('הזמנה נמסרה ✅');
+    showToast('✅ הזמנה נמסרה');
   }
+
   save(); renderAll(); closeModal('modal-ord-detail');
-  setTimeout(() => openCustDetail(cid), 200);
+  setTimeout(() => { openCustDetail(cid); setCustDetailTab('debts'); }, 250);
 }
 
 function cancelCustOrder(cid, oid) {
@@ -1725,12 +1758,16 @@ function cancelCustOrder(cid, oid) {
 }
 
 function setCustDetailTab(tab) {
-  ['info','inv','orders','debts'].forEach(t => {
-    document.getElementById('cd-tab-' + t).style.display = t === tab ? 'block' : 'none';
-    document.getElementById('cdt-' + t).classList.toggle('active', t === tab);
+  const tabs = ['info','inv','orders','debts'];
+  tabs.forEach(t => {
+    const tabEl = document.getElementById('cd-tab-' + t);
+    const btnEl = document.getElementById('cdt-' + t);
+    if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
+    if (btnEl) btnEl.classList.toggle('active', t === tab);
   });
   if (tab === 'inv') renderCustDetailInv(activeCid);
   if (tab === 'orders') renderCustDetailOrders(activeCid);
+  if (tab === 'debts') renderCustDetailDebts(activeCid);
 }
 
 function renderCustDetailInv(cid) {
@@ -1781,6 +1818,25 @@ function renderCustDetailOrders(cid) {
     : '<div style="color:var(--t3);font-size:13px;padding:12px 0;text-align:center">אין הזמנות — לחץ "+ הזמנה חדשה"</div>';
 }
 
+function renderCustDetailDebts(cid) {
+  const custDebts = DB.debts.filter(d => d.custId === cid && !d.closed && !d.isCredit).sort((a, b) => b.date.localeCompare(a.date));
+  let debtHtml = '';
+  if (custDebts.length) {
+    debtHtml = '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><button onclick="toggleSelectAllDebts(\'' + cid + '\')" style="font-size:12px;font-weight:700;color:var(--ac);background:none;border:none;cursor:pointer" id="btn-sel-all-' + cid + '">☐ בחר הכל</button><button onclick="deleteSelectedDebts(\'' + cid + '\')" style="font-size:12px;font-weight:700;color:var(--rd);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:4px 10px;cursor:pointer;display:none" id="btn-del-sel-' + cid + '">🗑️ מחק נבחרים</button></div>';
+    custDebts.forEach(d => {
+      const age = daysDiff(d.date);
+      const ageColor = age > 60 ? 'var(--rd)' : age > 30 ? 'var(--yw)' : 'var(--t2)';
+      const remaining = Number(d.amount) - (d.paidAmount || 0);
+      debtHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--br)"><input type="checkbox" id="chk-' + d.id + '" onchange="onDebtCheck(\'' + cid + '\')" style="width:18px;height:18px;accent-color:var(--ac);flex-shrink:0;cursor:pointer"><div style="flex:1"><div style="display:flex;align-items:center;gap:6px">' + (d.docnum ? '<span style="background:var(--s3);border:1px solid var(--br);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800">#' + d.docnum + '</span>' : '') + '<span style="font-size:13px;font-weight:800;color:var(--rd)">' + fmt(remaining) + '</span>' + (d.paidAmount ? '<span style="font-size:10px;color:var(--yw)">שולם חלק ' + fmt(d.paidAmount) + '</span>' : '') + '</div>' + (d.desc ? '<div style="font-size:11px;color:var(--t2);margin-top:2px">' + d.desc + '</div>' : '') + '</div><div style="text-align:left"><div style="font-size:11px;color:var(--t2)">' + fmtDate(d.date) + '</div><div style="font-size:10px;font-weight:800;color:' + ageColor + '">' + age + ' יום</div></div></div>';
+    });
+    debtHtml += '</div>';
+  } else {
+    debtHtml = '<div style="color:var(--t3);font-size:13px;padding:8px 0;text-align:center">אין חובות פתוחים ✅</div>';
+  }
+  const el = document.getElementById('cd-debts');
+  if (el) el.innerHTML = debtHtml;
+}
+
 // ===================== CUSTOMER DETAIL =====================
 function openCustDetail(cid) {
   activeCid = cid;
@@ -1823,21 +1879,7 @@ function openCustDetail(cid) {
     : '<div style="color:var(--t3);font-size:13px;padding:8px 0">אין ציוד רשום</div>';
 
   // Debts
-  const custDebts = DB.debts.filter(d => d.custId === cid && !d.closed && !d.isCredit).sort((a, b) => b.date.localeCompare(a.date));
-  let debtHtml = '';
-  if (custDebts.length) {
-    debtHtml = '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><button onclick="toggleSelectAllDebts(\'' + cid + '\')" style="font-size:12px;font-weight:700;color:var(--ac);background:none;border:none;cursor:pointer" id="btn-sel-all-' + cid + '">☐ בחר הכל</button><button onclick="deleteSelectedDebts(\'' + cid + '\')" style="font-size:12px;font-weight:700;color:var(--rd);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:4px 10px;cursor:pointer;display:none" id="btn-del-sel-' + cid + '">🗑️ מחק נבחרים</button></div>';
-    custDebts.forEach(d => {
-      const age = daysDiff(d.date);
-      const ageColor = age > 60 ? 'var(--rd)' : age > 30 ? 'var(--yw)' : 'var(--t2)';
-      const remaining = Number(d.amount) - (d.paidAmount || 0);
-      debtHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--br)"><input type="checkbox" id="chk-' + d.id + '" onchange="onDebtCheck(\'' + cid + '\')" style="width:18px;height:18px;accent-color:var(--ac);flex-shrink:0;cursor:pointer"><div style="flex:1"><div style="display:flex;align-items:center;gap:6px">' + (d.docnum ? '<span style="background:var(--s3);border:1px solid var(--br);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800">#' + d.docnum + '</span>' : '') + '<span style="font-size:13px;font-weight:800;color:var(--rd)">' + fmt(remaining) + '</span>' + (d.paidAmount ? '<span style="font-size:10px;color:var(--yw)">שולם חלק ' + fmt(d.paidAmount) + '</span>' : '') + '</div>' + (d.desc ? '<div style="font-size:11px;color:var(--t2);margin-top:2px">' + d.desc + '</div>' : '') + '</div><div style="text-align:left"><div style="font-size:11px;color:var(--t2)">' + fmtDate(d.date) + '</div><div style="font-size:10px;font-weight:800;color:' + ageColor + '">' + age + ' יום</div></div></div>';
-    });
-    debtHtml += '</div>';
-  } else {
-    debtHtml = '<div style="color:var(--t3);font-size:13px;padding:8px 0">אין חובות פתוחים ✅</div>';
-  }
-  document.getElementById('cd-debts').innerHTML = debtHtml;
+  renderCustDetailDebts(cid);
   renderPaymentHistory(cid);
   openModal('modal-cust-detail');
 }

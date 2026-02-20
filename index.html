@@ -848,10 +848,6 @@ textarea.fi { resize: none; }
         <div class="fg"><label class="fl">מסירה</label><input class="fi" id="cord-deliver-date" type="date"></div>
       </div>
       <div class="sec-div">פריטים להזמנה</div>
-      <div class="sbar" style="margin-bottom:8px">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" placeholder="חיפוש מוצר..." id="cord-prod-search" oninput="filterOrderProducts()" style="flex:1;background:none;border:none;outline:none;color:var(--tx);font-family:'Heebo',sans-serif;font-size:13px;text-align:right">
-      </div>
       <div id="cord-items-list"></div>
       <button class="btno" onclick="addCustOrderItem()" style="margin-top:8px">+ הוסף פריט</button>
       <div class="fg" style="margin-top:12px"><label class="fl">הערות</label><textarea class="fi" id="cord-notes" rows="2" placeholder="הוראות מיוחדות..."></textarea></div>
@@ -1065,22 +1061,58 @@ textarea.fi { resize: none; }
 <div class="overlay" id="modal-export">
   <div class="sheet">
     <div class="shandle"></div>
-    <div class="shead"><span class="stitle">📤 יצוא לאקסל</span><button class="xbtn" onclick="closeModal('modal-export')">✕</button></div>
+    <div class="shead"><span class="stitle">📤 יצוא / יבוא</span><button class="xbtn" onclick="closeModal('modal-export')">✕</button></div>
     <div class="sbody">
-      <button class="export-btn green" onclick="exportCSV('customers')">👤 יצוא לקוחות</button>
-      <button class="export-btn green" onclick="exportCSV('equipment')">📦 יצוא ציוד</button>
-      <button class="export-btn green" onclick="exportCSV('payments')">💰 יצוא תשלומים</button>
-      <button class="export-btn green" onclick="exportCSV('debts')">📋 יצוא חובות</button>
-      <button class="export-btn green" onclick="exportCSV('inventory')">🛒 יצוא מלאי</button>
-      <button class="export-btn" onclick="exportCSV('all')">📊 יצוא הכל</button>
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--br)">
-        <div style="font-weight:700;font-size:12px;color:var(--t2);margin-bottom:6px">יצוא לפי לקוח</div>
-        <div style="display:flex;gap:8px">
-          <select class="fi" id="export-cust-sel" style="flex:1;font-size:13px"><option value="">-- בחר לקוח --</option></select>
-          <button class="export-btn green" style="margin:0;width:auto;padding:10px 14px;flex-shrink:0" onclick="exportByCust()">📤</button>
-        </div>
+
+```
+  <!-- FULL BACKUP -->
+  <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:14px;padding:14px;margin-bottom:12px">
+    <div style="font-size:12px;font-weight:800;color:var(--ac);margin-bottom:10px">💾 גיבוי מלא (JSON)</div>
+    <button class="export-btn green" style="margin-top:0" onclick="exportFullBackup()">📥 הורד גיבוי מלא</button>
+    <div style="margin-top:8px">
+      <label style="display:block;font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:700">📤 שחזר מגיבוי</label>
+      <div style="position:relative;border:2px dashed var(--br2);border-radius:10px;padding:12px;text-align:center;cursor:pointer" onclick="document.getElementById('import-json-file').click()">
+        <div style="font-size:12px;color:var(--t2)" id="import-json-label">לחץ לבחירת קובץ JSON...</div>
+        <input type="file" id="import-json-file" accept=".json" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="importFromJSON(this)">
       </div>
     </div>
+  </div>
+
+  <!-- CSV EXPORT -->
+  <div style="background:var(--s2);border:1px solid var(--br);border-radius:14px;padding:14px;margin-bottom:12px">
+    <div style="font-size:12px;font-weight:800;color:var(--t2);margin-bottom:10px">📊 יצוא CSV לאקסל</div>
+    <button class="export-btn green" style="margin-top:0" onclick="exportCSV('customers')">👤 לקוחות</button>
+    <button class="export-btn green" onclick="exportCSV('debts')">📋 חובות</button>
+    <button class="export-btn green" onclick="exportCSV('payments')">💰 תשלומים</button>
+    <button class="export-btn green" onclick="exportCSV('inventory')">📦 מלאי</button>
+    <button class="export-btn green" onclick="exportCSV('equipment')">🧊 ציוד</button>
+  </div>
+
+  <!-- CSV IMPORT -->
+  <div style="background:var(--s2);border:1px solid var(--br);border-radius:14px;padding:14px">
+    <div style="font-size:12px;font-weight:800;color:var(--t2);margin-bottom:10px">📥 יבוא מ-CSV</div>
+    <div class="fg" style="margin-bottom:8px">
+      <label class="fl">סוג ייבוא</label>
+      <select class="fi" id="import-csv-type" style="font-size:13px">
+        <option value="customers">👤 לקוחות</option>
+        <option value="debts">📋 חובות</option>
+        <option value="payments">💰 תשלומים</option>
+        <option value="inventory">📦 מלאי</option>
+      </select>
+    </div>
+    <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px;margin-bottom:8px;font-size:11px;color:var(--yw);line-height:1.6">
+      ⚠️ הקובץ חייב להיות בדיוק באותו פורמט של היצוא. רשומות קיימות עם אותו מזהה יוחלפו.
+    </div>
+    <div style="position:relative;border:2px dashed var(--br2);border-radius:10px;padding:12px;text-align:center;cursor:pointer" onclick="document.getElementById('import-csv-file').click()">
+      <div style="font-size:12px;color:var(--t2)" id="import-csv-label">לחץ לבחירת קובץ CSV...</div>
+      <input type="file" id="import-csv-file" accept=".csv" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="importFromCSV(this)">
+    </div>
+    <div id="import-result" style="display:none;margin-top:10px;font-size:12px;font-weight:700;text-align:center;padding:8px;border-radius:8px"></div>
+  </div>
+
+</div>
+```
+
   </div>
 </div>
 
@@ -1622,45 +1654,89 @@ function openAddCustOrder(cid) {
   document.getElementById('cord-deliver-date').value = '';
   document.getElementById('cord-notes').value = '';
   document.getElementById('cord-items-list').innerHTML = '';
-  const _ps = document.getElementById('cord-prod-search'); if (_ps) _ps.value = '';
+
   document.getElementById('cord-total-preview').style.display = 'none';
   document.getElementById('cord-inv-notice').style.display = inv.length ? 'none' : 'block';
   openModal('modal-cust-order');
   if (inv.length > 0) addCustOrderItem(); // auto-add first row
 }
 
-function filterOrderProducts() {
-  const q = (document.getElementById('cord-prod-search')?.value || '').trim().toLowerCase();
-  document.querySelectorAll('#cord-items-list select').forEach(sel => {
-    Array.from(sel.options).forEach(opt => {
-      if (!opt.value) return; // keep placeholder
-      opt.hidden = q ? !opt.text.toLowerCase().includes(q) : false;
-    });
-    // If current selection is now hidden, reset it
-    const cur = sel.selectedOptions[0];
-    if (cur && cur.hidden) { sel.value = ''; calcCustOrderTotal(); }
-  });
-}
-
 function addCustOrderItem() {
   const cid = activeOrderCid;
   const c = getCust(cid); if (!c) return;
   const inv = c.inventory || [];
-  const invOpts = inv.map(i => `<option value="${i.id}" data-price="${i.salePrice || 0}" data-qty="${i.qty}">${i.name}${i.qty > 0 ? ' (' + i.qty + ' יח)' : ''}</option>`).join('');
   const itemId = uid();
-  activeOrderItems.push({ itemId });
+  activeOrderItems.push({ itemId, productId: null });
   const wrap = document.getElementById('cord-items-list');
   const div = document.createElement('div');
   div.id = 'coi-' + itemId;
-  div.style.cssText = 'display:grid;grid-template-columns:1fr auto auto;gap:6px;margin-bottom:8px;align-items:center';
+  div.style.cssText = 'background:var(--s2);border:1px solid var(--br);border-radius:12px;padding:10px;margin-bottom:8px;position:relative';
   div.innerHTML = `
-    <select class="fi" id="coi-prod-${itemId}" style="font-size:13px" onchange="calcCustOrderTotal()">
-      <option value="">בחר מוצר...</option>
-      ${invOpts}
-    </select>
-    <input class="fi qty-input" id="coi-qty-${itemId}" type="number" value="1" min="1" style="width:64px" oninput="calcCustOrderTotal()">
-    <button onclick="removeCustOrderItem('${itemId}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--rd);border-radius:10px;padding:8px;cursor:pointer;font-size:14px">✕</button>`;
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+      <div style="flex:1;position:relative">
+        <input class="fi" id="coi-search-${itemId}" placeholder="חיפוש מוצר..." autocomplete="off"
+          oninput="showProdDropdown('${itemId}')"
+          onfocus="showProdDropdown('${itemId}')"
+          style="font-size:13px;padding-left:8px"
+          dir="rtl">
+        <div id="coi-drop-${itemId}" style="display:none;position:absolute;right:0;left:0;top:100%;margin-top:2px;background:var(--sf);border:1px solid var(--br2);border-radius:10px;z-index:9999;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5)"></div>
+      </div>
+      <input class="fi qty-input" id="coi-qty-${itemId}" type="number" value="1" min="1" style="width:64px;flex-shrink:0" oninput="calcCustOrderTotal()">
+      <button onclick="removeCustOrderItem('${itemId}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--rd);border-radius:10px;padding:8px 10px;cursor:pointer;font-size:14px;flex-shrink:0">✕</button>
+    </div>
+    <div id="coi-selected-${itemId}" style="display:none;font-size:12px;color:var(--t2);margin-top:2px"></div>
+    <input type="hidden" id="coi-prod-${itemId}" value="">`;
   wrap.appendChild(div);
+  calcCustOrderTotal();
+  document.getElementById('coi-search-' + itemId).focus();
+}
+
+function showProdDropdown(itemId) {
+  const c = getCust(activeOrderCid); if (!c) return;
+  const inv = c.inventory || [];
+  const q = (document.getElementById('coi-search-' + itemId)?.value || '').trim().toLowerCase();
+  const drop = document.getElementById('coi-drop-' + itemId); if (!drop) return;
+  const filtered = q ? inv.filter(i => i.name.toLowerCase().includes(q)) : inv;
+  if (!filtered.length) { drop.style.display = 'none'; return; }
+  drop.innerHTML = filtered.map(i => {
+    const isLow = Number(i.minQty || 0) > 0 && Number(i.qty) <= Number(i.minQty);
+    return `<div onclick="selectOrderProd('${itemId}','${i.id}')"
+      style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--br);transition:background .1s"
+      onmouseenter="this.style.background='var(--s3)'" onmouseleave="this.style.background=''">
+      <div>
+        <div style="font-size:13px;font-weight:700">${i.name}</div>
+        ${i.salePrice ? `<div style="font-size:11px;color:var(--t2)">${fmt(i.salePrice)} ל׳יח</div>` : ''}
+      </div>
+      <span style="font-size:13px;font-weight:900;color:${isLow ? 'var(--rd)' : 'var(--gr)'}">${i.qty} יח׳</span>
+    </div>`;
+  }).join('');
+  drop.style.display = 'block';
+  // close on outside click
+  setTimeout(() => {
+    const close = (e) => {
+      const inp = document.getElementById('coi-search-' + itemId);
+      if (inp && !inp.contains(e.target) && !drop.contains(e.target)) {
+        drop.style.display = 'none';
+        document.removeEventListener('click', close);
+      }
+    };
+    document.addEventListener('click', close);
+  }, 0);
+}
+
+function selectOrderProd(itemId, productId) {
+  const c = getCust(activeOrderCid); if (!c) return;
+  const item = (c.inventory || []).find(i => i.id === productId); if (!item) return;
+  document.getElementById('coi-prod-' + itemId).value = productId;
+  document.getElementById('coi-search-' + itemId).value = item.name;
+  const drop = document.getElementById('coi-drop-' + itemId); if (drop) drop.style.display = 'none';
+  const sel = document.getElementById('coi-selected-' + itemId);
+  if (sel) {
+    sel.style.display = 'block';
+    sel.innerHTML = `<span style="color:var(--gr)">✓</span> ${item.name}${item.salePrice ? ' · ' + fmt(item.salePrice) + ' ל׳יח' : ''}`;
+  }
+  const itemObj = activeOrderItems.find(x => x.itemId === itemId);
+  if (itemObj) itemObj.productId = productId;
   calcCustOrderTotal();
 }
 
@@ -1675,11 +1751,12 @@ function calcCustOrderTotal() {
   const inv = c.inventory || [];
   let total = 0;
   activeOrderItems.forEach(({ itemId }) => {
-    const sel = document.getElementById('coi-prod-' + itemId);
+    const prodEl = document.getElementById('coi-prod-' + itemId);
     const qtyEl = document.getElementById('coi-qty-' + itemId);
-    if (!sel || !qtyEl) return;
-    const opt = sel.selectedOptions[0];
-    const price = opt ? Number(opt.dataset.price || 0) : 0;
+    if (!prodEl || !qtyEl) return;
+    const productId = prodEl.value;
+    const invItem = inv.find(i => i.id === productId);
+    const price = invItem ? Number(invItem.salePrice || 0) : 0;
     const qty = Number(qtyEl.value) || 0;
     total += price * qty;
   });
@@ -1701,7 +1778,7 @@ function saveCustOrder() {
   activeOrderItems.forEach(({ itemId }) => {
     const sel = document.getElementById('coi-prod-' + itemId);
     const qtyEl = document.getElementById('coi-qty-' + itemId);
-    if (!sel || !sel.value) { alert('נא לבחור מוצר לכל שורה'); valid = false; return; }
+    if (!sel || !sel.value) { alert('נא לבחור מוצר לכל שורה (הקלד בשדה החיפוש ובחר)'); valid = false; return; }
     const invItem = inv.find(x => x.id === sel.value);
     if (!invItem) return;
     items.push({ productId: sel.value, name: invItem.name, qty: Number(qtyEl.value) || 1, price: invItem.salePrice || 0 });
@@ -2678,6 +2755,218 @@ function exportByCust() {
   });
   rows.push(csvRow([''])); rows.push(csvRow(['יתרה', '', '', custDebt(cid)]));
   downloadCSV(cust.name + '_' + today() + '.csv', rows); showToast('יצוא ' + cust.name + ' ✅'); closeModal('modal-export');
+}
+
+
+// ===================== FULL BACKUP / RESTORE =====================
+function exportFullBackup() {
+  const backup = {
+    version: 2,
+    exported: new Date().toISOString(),
+    customers: DB.customers,
+    debts: DB.debts,
+    payments: DB.payments,
+    equipment: DB.equipment,
+    visits: DB.visits || [],
+    inventory_note: 'מלאי מוצמד בתוך customers[].inventory'
+  };
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'CRM_גיבוי_' + today() + '.json'; a.style.display = 'none';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1000);
+  showToast('גיבוי מלא הורד ✅');
+  closeModal('modal-export');
+}
+
+function importFromJSON(input) {
+  const file = input.files[0]; if (!file) return;
+  document.getElementById('import-json-label').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.customers || !Array.isArray(data.customers)) {
+        alert('קובץ JSON לא תקין — חסר מערך customers'); return;
+      }
+      const msg = `שחזור גיבוי מ-${data.exported ? new Date(data.exported).toLocaleDateString('he') : 'תאריך לא ידוע'}
+
+הנתונים הנוכחיים יוחלפו לחלוטין!
+
+לקוחות: ${data.customers.length}
+חובות: ${(data.debts||[]).length}
+תשלומים: ${(data.payments||[]).length}
+ציוד: ${(data.equipment||[]).length}
+
+האם להמשיך?`;
+      if (!confirm(msg)) { input.value = ''; document.getElementById('import-json-label').textContent = 'לחץ לבחירת קובץ JSON...'; return; }
+      DB.customers = data.customers;
+      DB.debts = data.debts || [];
+      DB.payments = data.payments || [];
+      DB.equipment = data.equipment || [];
+      DB.visits = data.visits || [];
+      save(); renderAll();
+      closeModal('modal-export');
+      showToast('✅ שוחזר! ' + DB.customers.length + ' לקוחות, ' + DB.debts.length + ' חובות');
+    } catch(err) {
+      alert('שגיאה בפענוח הקובץ: ' + err.message);
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+// ===================== CSV IMPORT =====================
+function parseCSVLine(line) {
+  const result = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+    else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+    else cur += ch;
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function parseCSV(text) {
+  const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim());
+  if (lines.length < 2) return { headers: [], rows: [] };
+  const headers = parseCSVLine(lines[0]).map(h => h.replace(/^\uFEFF/, '').trim());
+  const rows = lines.slice(1).map(l => {
+    const vals = parseCSVLine(l);
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (vals[i] || '').trim());
+    return obj;
+  });
+  return { headers, rows };
+}
+
+function importFromCSV(input) {
+  const file = input.files[0]; if (!file) return;
+  document.getElementById('import-csv-label').textContent = file.name;
+  const type = document.getElementById('import-csv-type').value;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const { headers, rows } = parseCSV(e.target.result);
+      if (!rows.length) { showImportResult('error', 'הקובץ ריק'); return; }
+      let imported = 0, skipped = 0, errors = [];
+
+      if (type === 'customers') {
+        // Required: שם לקוח, טלפון
+        rows.forEach((r, idx) => {
+          const name = r['שם לקוח'] || r['שם'];
+          const phone = r['טלפון'];
+          if (!name) { skipped++; return; }
+          const terms = (r['תנאי תשלום'] || '').replace('שוטף ','');
+          const existing = DB.customers.find(c => c.phone === phone || c.name === name);
+          if (existing) {
+            // update existing
+            if (r['איש קשר']) existing.contact = r['איש קשר'];
+            if (r['עיר']) existing.city = r['עיר'];
+            if (terms) existing.terms = terms;
+            if (r['קו']) existing.route = r['קו'];
+            if (r['הערות']) existing.notes = r['הערות'];
+            imported++;
+          } else {
+            DB.customers.push({
+              id: uid(), name, phone: phone || '', contact: r['איש קשר'] || '',
+              city: r['עיר'] || '', terms, route: r['קו'] || '',
+              notes: r['הערות'] || '', created: today(), active: true
+            });
+            imported++;
+          }
+        });
+
+      } else if (type === 'debts') {
+        // Required: לקוח, סכום, מספר מסמך
+        rows.forEach(r => {
+          const custName = r['לקוח'];
+          const amount = Number(r['סכום']);
+          const docnum = r['מסמך'] || r['מספר מסמך'];
+          if (!custName || !amount) { skipped++; return; }
+          const cust = DB.customers.find(c => c.name === custName);
+          if (!cust) { errors.push('לא נמצא לקוח: ' + custName); skipped++; return; }
+          if (docnum && DB.debts.find(d => d.docnum === docnum && d.custId === cust.id)) { skipped++; return; }
+          DB.debts.push({
+            id: uid(), custId: cust.id, amount, docnum: docnum || '',
+            date: r['תאריך'] || today(), desc: r['תיאור'] || ''
+          });
+          imported++;
+        });
+
+      } else if (type === 'payments') {
+        // Required: לקוח, סכום, תאריך, אמצעי
+        rows.forEach(r => {
+          const custName = r['לקוח'];
+          const amount = Number(r['סכום']);
+          if (!custName || !amount) { skipped++; return; }
+          const cust = DB.customers.find(c => c.name === custName);
+          if (!cust) { errors.push('לא נמצא לקוח: ' + custName); skipped++; return; }
+          DB.payments.push({
+            id: uid(), custId: cust.id, amount,
+            method: r['אמצעי'] || 'מזומן',
+            date: r['תאריך'] || today(),
+            note: r['הערה'] || '',
+            check: r['שיק'] || ''
+          });
+          imported++;
+        });
+
+      } else if (type === 'inventory') {
+        // Required: לקוח, שם מוצר
+        rows.forEach(r => {
+          const custName = r['לקוח'];
+          const name = r['שם מוצר'];
+          if (!custName || !name) { skipped++; return; }
+          const cust = DB.customers.find(c => c.name === custName);
+          if (!cust) { errors.push('לא נמצא לקוח: ' + custName); skipped++; return; }
+          if (!cust.inventory) cust.inventory = [];
+          const existing = cust.inventory.find(i => i.name === name);
+          if (existing) {
+            if (r['כמות']) existing.qty = Number(r['כמות']) || 0;
+            if (r['מינימום']) existing.minQty = Number(r['מינימום']) || 0;
+            if (r['מחיר']) existing.salePrice = Number(r['מחיר']) || 0;
+            if (r['תפוגה']) existing.expiry = r['תפוגה'];
+            imported++;
+          } else {
+            const catMap = { 'גלידות':'icecream', 'ירקות':'vegetables', 'בצק':'dough', 'פירות':'fruit', 'אחר':'other' };
+            cust.inventory.push({
+              id: uid(), name,
+              category: catMap[r['קטגוריה']] || 'other',
+              qty: Number(r['כמות']) || 0,
+              minQty: Number(r['מינימום']) || 0,
+              salePrice: Number(r['מחיר']) || 0,
+              expiry: r['תפוגה'] || '',
+              created: today()
+            });
+            imported++;
+          }
+        });
+      }
+
+      save(); renderAll();
+      const msg = `✅ יובאו ${imported} רשומות` + (skipped ? `, דולגו ${skipped}` : '') + (errors.length ? `\n⚠️ ${errors.slice(0,3).join(', ')}` : '');
+      showImportResult('ok', msg);
+      if (imported > 0) showToast('✅ יובאו ' + imported + ' רשומות');
+
+    } catch(err) {
+      showImportResult('error', 'שגיאה: ' + err.message);
+    }
+    input.value = '';
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function showImportResult(type, msg) {
+  const el = document.getElementById('import-result'); if (!el) return;
+  el.style.display = 'block';
+  el.style.background = type === 'ok' ? 'rgba(16,185,129,.15)' : 'rgba(239,68,68,.15)';
+  el.style.color = type === 'ok' ? 'var(--gr)' : 'var(--rd)';
+  el.style.border = type === 'ok' ? '1px solid rgba(16,185,129,.3)' : '1px solid rgba(239,68,68,.3)';
+  el.textContent = msg;
 }
 
 // ===================== TERMS HELPER =====================

@@ -105,7 +105,8 @@ body::before {
 .ni em { font-size: 10px; font-weight: 700; font-style: normal; }
 .nbadge {
   position: absolute; top: 3px; right: calc(50% - 18px);
-  background: var(--rd); color: #fff; font-size: 9px; font-weight: 800;
+  background: var(--s3); color: var(--t2); border: 1px solid var(--br);
+  font-size: 9px; font-weight: 800;
   padding: 1px 4px; border-radius: 8px; min-width: 14px; text-align: center; display: none;
 }
 .nbadge.on { display: block; }
@@ -511,9 +512,12 @@ textarea.fi { resize: none; }
     <div class="sbox r"><div class="sv r" id="d-total">₪0</div><div class="sl">סה"כ חובות</div></div>
     <div class="sbox g"><div class="sv g" id="d-count">0</div><div class="sl">לקוחות חייבים</div></div>
   </div>
-  <div class="sbar">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input type="text" placeholder="חיפוש..." id="debt-search" oninput="renderDebts()">
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <div class="sbar" style="flex:1;margin-bottom:0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="חיפוש..." id="debt-search" oninput="renderDebts()">
+    </div>
+    <button onclick="openPaymentGeneral()" style="padding:0 14px;border-radius:12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:var(--gr);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">💰 תשלום</button>
   </div>
   <div class="tabs">
     <div class="tab active" onclick="setDebtTab(this,'all')">הכל</div>
@@ -539,6 +543,7 @@ textarea.fi { resize: none; }
   <div class="tabs">
     <div class="tab active" onclick="setInvTab(this,'all')">הכל</div>
     <div class="tab" onclick="setInvTab(this,'low')">מלאי נמוך</div>
+    <div class="tab" onclick="setInvTab(this,'placement')">🧊 השמות</div>
     <div class="tab" onclick="setInvTab(this,'icecream')">גלידות</div>
     <div class="tab" onclick="setInvTab(this,'vegetables')">ירקות</div>
     <div class="tab" onclick="setInvTab(this,'dough')">בצק</div>
@@ -568,10 +573,11 @@ textarea.fi { resize: none; }
   <div class="sgrid" id="hist-stats"></div>
   <div class="sbar">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input type="text" placeholder="חיפוש תשלום..." id="hist-search" oninput="renderHistory()">
+    <input type="text" placeholder="חיפוש..." id="hist-search" oninput="renderHistory()">
   </div>
   <div class="tabs">
     <div class="tab active" onclick="setHistTab(this,'all')">הכל</div>
+    <div class="tab" onclick="setHistTab(this,'debts')">חובות</div>
     <div class="tab" onclick="setHistTab(this,'cash')">מזומן</div>
     <div class="tab" onclick="setHistTab(this,'check')">שיק</div>
     <div class="tab" onclick="setHistTab(this,'transfer')">העברה</div>
@@ -843,6 +849,8 @@ textarea.fi { resize: none; }
       <div id="cord-inv-notice" style="display:none;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px;color:var(--yw)">
         ⚠️ ללקוח זה אין מוצרים מוגדרים. הוסף מוצרים תחילה בטאב "מלאי".
       </div>
+      <div id="cord-no-order-alert" style="display:none;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px;font-weight:700;color:#818cf8"></div>
+      <div id="cord-recommendations" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:10px;margin-bottom:12px"></div>
       <div class="frow">
         <div class="fg"><label class="fl">תאריך</label><input class="fi" id="cord-date" type="date"></div>
         <div class="fg"><label class="fl">מסירה</label><input class="fi" id="cord-deliver-date" type="date"></div>
@@ -882,7 +890,7 @@ textarea.fi { resize: none; }
       <div class="fg"><label class="fl">לקוח</label><input class="fi" id="pay-cust-name" readonly></div>
       <div class="fg"><label class="fl">יתרת חוב</label><input class="fi" id="pay-balance" readonly dir="ltr"></div>
       <div class="frow">
-        <div class="fg"><label class="fl">סכום ₪ *</label><input class="fi" id="pay-amount" type="number" placeholder="0" dir="ltr"></div>
+        <div class="fg"><label class="fl">סכום ₪ *</label><input class="fi" id="pay-amount" type="number" placeholder="0" dir="ltr" oninput="onPayAmountChange()"></div>
         <div class="fg"><label class="fl">אמצעי תשלום *</label>
           <select class="fi" id="pay-method" onchange="onPayMethodChange()">
             <option value="מזומן">💵 מזומן</option>
@@ -892,14 +900,27 @@ textarea.fi { resize: none; }
           </select>
         </div>
       </div>
-      <div class="fg" id="pay-check-wrap" style="display:none"><label class="fl">מספר שיק *</label><input class="fi" id="pay-check" placeholder="123456" dir="ltr"></div>
-      <div class="fg" id="pay-check-date-wrap" style="display:none"><label class="fl">תאריך על השיק *</label><input class="fi" id="pay-check-date" type="date"></div>
-      <div class="fg" id="pay-docref-wrap" style="display:none"><label class="fl">מספר מסמך (לזיכוי) *</label><input class="fi" id="pay-docref" placeholder="ZK-001" dir="ltr"></div>
-      <div class="fg"><label class="fl">תאריך</label><input class="fi" id="pay-date" type="date"></div>
-      <div class="fg"><label class="fl">בחר מסמך לסגירה</label>
-        <select class="fi" id="pay-doc-select"><option value="">-- ללא שיוך --</option></select>
+      <!-- שיק -->
+      <div id="pay-check-wrap" style="display:none">
+        <div class="frow">
+          <div class="fg"><label class="fl">מספר שיק *</label><input class="fi" id="pay-check" placeholder="123456" dir="ltr"></div>
+          <div class="fg"><label class="fl">תאריך שיק *</label><input class="fi" id="pay-check-date" type="date" onchange="onCheckDateChange()"></div>
+        </div>
+        <div id="pay-check-alert" style="display:none;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:10px;margin-top:4px;font-size:12px;color:var(--rd);font-weight:700"></div>
+        <div id="pay-check-info" style="display:none;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:8px;margin-top:4px;font-size:12px;color:var(--gr)"></div>
       </div>
-      <div class="fg"><label class="fl">הערה *</label><input class="fi" id="pay-note" placeholder="חובה להזין הערה..."></div>
+      <!-- העברה -->
+      <div class="fg" id="pay-transfer-wrap" style="display:none"><label class="fl">מספר אסמכתא / העברה</label><input class="fi" id="pay-transfer-ref" placeholder="TRF-12345" dir="ltr"></div>
+      <!-- זיכוי -->
+      <div class="fg" id="pay-docref-wrap" style="display:none"><label class="fl">מספר מסמך זיכוי *</label><input class="fi" id="pay-docref" placeholder="ZK-001" dir="ltr"></div>
+      <div class="fg"><label class="fl">תאריך</label><input class="fi" id="pay-date" type="date"></div>
+      <!-- מסמכים לסגירה -->
+      <div class="fg">
+        <label class="fl">בחר מסמכים לסגירה</label>
+        <div id="pay-docs-checklist" style="border:1px solid var(--br);border-radius:10px;max-height:130px;overflow-y:auto;padding:4px 0"></div>
+        <div id="pay-docs-total" style="font-size:11px;color:var(--t2);margin-top:4px;text-align:left"></div>
+      </div>
+      <div class="fg"><label class="fl">הערה</label><input class="fi" id="pay-note" placeholder="הערות..."></div>
       <button class="btnp" onclick="savePayment()">אשר תשלום ✓</button>
     </div>
   </div>
@@ -1206,11 +1227,13 @@ function avLetter(n) { return n ? n.charAt(0) : '?'; }
 
 function custDebt(cid) {
   let total = 0;
-  DB.debts.filter(x => x.custId === cid && !x.isCredit).forEach(x => {
-    if (!x.closed) total += Number(x.amount) - (x.paidAmount || 0);
+  DB.debts.filter(x => x.custId === cid && !x.isCredit && !x.closed).forEach(x => {
+    total += Number(x.amount) - (x.paidAmount || 0);
   });
-  const cr = DB.debts.filter(x => x.custId === cid && x.isCredit).reduce((s, x) => s + Math.abs(Number(x.amount)), 0);
-  const p = DB.payments.filter(x => x.custId === cid && !x.linkedDoc).reduce((s, x) => s + Number(x.amount), 0);
+  // Credits: subtract open credits (those not yet applied)
+  const cr = DB.debts.filter(x => x.custId === cid && x.isCredit && !x.closed).reduce((s, x) => s + Math.abs(Number(x.amount)), 0);
+  // Payments without linked docs (free payments reduce debt)
+  const p = DB.payments.filter(x => x.custId === cid && !(x.linkedDocs && x.linkedDocs.length) && !x.linkedDoc).reduce((s, x) => s + Number(x.amount), 0);
   return total - cr - p;
 }
 function eqDebt(cid) { return DB.equipment.filter(e => e.custId === cid).reduce((s, e) => s + Number(e.eqDebt || 0), 0); }
@@ -1422,6 +1445,33 @@ function renderDebts() {
 // ===================== INVENTORY (per customer) =====================
 function renderInventory() {
   const q = (document.getElementById('inv-search')?.value || '').toLowerCase();
+  const tab = curTab.inv || 'all';
+
+  // ── טאב השמות — מציג ציוד פעיל לפי לקוח ──
+  if (tab === 'placement') {
+    const custsWithEq = DB.customers.filter(c => c.active && DB.equipment.some(e => e.custId === c.id && e.status !== 'returned'));
+    document.getElementById('inv-list').innerHTML = custsWithEq.length
+      ? custsWithEq.filter(c => !q || c.name.toLowerCase().includes(q)).map(c => {
+          const eqs = DB.equipment.filter(e => e.custId === c.id && e.status !== 'returned');
+          return `<div style="background:var(--sf);border:1px solid var(--br);border-radius:16px;margin:0 16px 10px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--br)" onclick="openCustDetail('${c.id}')">
+              <div class="av ${avClass(DB.customers.indexOf(c))}" style="width:36px;height:36px;border-radius:10px;font-size:14px">${avLetter(c.name)}</div>
+              <div style="flex:1"><div style="font-size:14px;font-weight:800">${c.name}</div><div style="font-size:11px;color:var(--t2)">${eqs.length} פריטי ציוד</div></div>
+            </div>
+            ${eqs.map(e => `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--br)">
+              <div style="font-size:20px">🧊</div>
+              <div style="flex:1"><div style="font-size:13px;font-weight:700">${e.type}${e.serial ? ' · ' + e.serial : ''}</div>
+                <div style="font-size:11px;color:var(--t2)">הוצב: ${fmtDate(e.placed || '')}</div></div>
+              <span class="chip ${e.status === 'ok' ? 'cg' : e.status === 'broken' ? 'cr' : 'cy'}" style="font-size:10px">${e.status === 'ok' ? 'תקין' : e.status === 'broken' ? 'תקול' : 'תחזוקה'}</span>
+            </div>`).join('')}
+          </div>`;
+        }).join('')
+      : '<div class="empty"><div class="empty-icon">🧊</div><div class="empty-title">אין ציוד מוצב</div></div>';
+    document.getElementById('inv-low').textContent = '—';
+    document.getElementById('inv-total-prods').textContent = DB.equipment.filter(e => e.status !== 'returned').length;
+    return;
+  }
+
   // Build list of customers with their inventory
   let custs = DB.customers.filter(c => c.active && (c.inventory || []).length > 0);
   if (q) custs = custs.filter(c => c.name.toLowerCase().includes(q) || (c.inventory || []).some(i => i.name.toLowerCase().includes(q)));
@@ -1457,7 +1507,9 @@ function renderInventory() {
 
   document.getElementById('inv-list').innerHTML = custs.length
     ? custs.map(c => {
-        const inv = (c.inventory || []).filter(i => !q || i.name.toLowerCase().includes(q) || c.name.toLowerCase().includes(q));
+        let inv = (c.inventory || []).filter(i => !q || i.name.toLowerCase().includes(q) || c.name.toLowerCase().includes(q));
+        if (tab === 'low') inv = inv.filter(i => Number(i.minQty || 0) > 0 && Number(i.qty) <= Number(i.minQty));
+        else if (tab !== 'all') inv = inv.filter(i => i.category === tab);
         const pendOrd = (c.orders || []).filter(o => o.status === 'pending').length;
         return `<div style="background:var(--sf);border:1px solid var(--br);border-radius:16px;margin:0 16px 10px;overflow:hidden">
           <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--br)" onclick="openCustDetail('${c.id}')">
@@ -1654,11 +1706,52 @@ function openAddCustOrder(cid) {
   document.getElementById('cord-deliver-date').value = '';
   document.getElementById('cord-notes').value = '';
   document.getElementById('cord-items-list').innerHTML = '';
-
   document.getElementById('cord-total-preview').style.display = 'none';
   document.getElementById('cord-inv-notice').style.display = inv.length ? 'none' : 'block';
+
+  // המלצות: מלאי נמוך
+  const lowItems = inv.filter(i => Number(i.minQty || 0) > 0 && Number(i.qty) <= Number(i.minQty));
+  const recEl = document.getElementById('cord-recommendations');
+  if (recEl && lowItems.length) {
+    recEl.style.display = 'block';
+    recEl.innerHTML = '<div style="font-size:11px;font-weight:800;color:var(--yw);margin-bottom:6px">⚠️ המלצות הזמנה — מלאי נמוך:</div>' +
+      lowItems.map(function(i) { return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(245,158,11,.15);cursor:pointer" onclick="autoAddOrderItem(\'' + i.id + '\')">' +
+        '<span style="font-size:12px;font-weight:700">' + i.name + ' <span style="color:var(--rd)">(' + i.qty + '/' + i.minQty + ')</span></span>' +
+        '<span style="font-size:11px;color:var(--ac);font-weight:700">+ הוסף</span></div>'; }).join('');
+  } else if (recEl) recEl.style.display = 'none';
+
+  // ── התראה אם הלקוח לא הזמין זמן רב ──
+  const allOrders = c.orders || [];
+  const lastOrder = allOrders.filter(o => o.status !== 'cancelled').sort((a,b) => b.created > a.created ? 1 : -1)[0];
+  const noOrderAlertEl = document.getElementById('cord-no-order-alert');
+  if (noOrderAlertEl) {
+    if (!lastOrder) {
+      noOrderAlertEl.style.display = 'block';
+      noOrderAlertEl.textContent = '📌 ללקוח זה אין הזמנות קודמות.';
+    } else {
+      const daysSince = daysDiff(lastOrder.created);
+      if (daysSince >= 14) {
+        noOrderAlertEl.style.display = 'block';
+        noOrderAlertEl.textContent = '📌 ההזמנה האחרונה לפני ' + daysSince + ' ימים (' + fmtDate(lastOrder.created) + ').';
+      } else {
+        noOrderAlertEl.style.display = 'none';
+      }
+    }
+  }
+
   openModal('modal-cust-order');
   if (inv.length > 0) addCustOrderItem(); // auto-add first row
+}
+
+function autoAddOrderItem(productId) {
+  const c = getCust(activeOrderCid); if (!c) return;
+  const exists = activeOrderItems.some(x => { const el = document.getElementById('coi-prod-' + x.itemId); return el && el.value === productId; });
+  if (exists) { showToast('המוצר כבר ברשימה'); return; }
+  addCustOrderItem();
+  setTimeout(() => {
+    const last = activeOrderItems[activeOrderItems.length - 1];
+    if (last) selectOrderProd(last.itemId, productId);
+  }, 60);
 }
 
 function addCustOrderItem() {
@@ -1857,8 +1950,9 @@ function markCustOrderDelivered(cid, oid) {
     }
   });
 
-  // Create debt automatically
-  const total = (o.items || []).reduce((s, i) => s + (Number(i.qty) * Number(i.price || 0)), 0);
+  // Create debt automatically with 18% VAT
+  const subtotal = (o.items || []).reduce((s, i) => s + (Number(i.qty) * Number(i.price || 0)), 0);
+  const total = Math.round(subtotal * 1.18 * 100) / 100;
   if (total > 0) {
     DB.debts.push({
       id: uid(),
@@ -1866,9 +1960,9 @@ function markCustOrderDelivered(cid, oid) {
       amount: total,
       docnum: docnum,
       date: debtDate,
-      desc: 'הזמנה: ' + (o.items || []).map(i => i.name + ' ×' + i.qty).join(', ')
+      desc: 'הזמנה: ' + (o.items || []).map(i => i.name + ' ×' + i.qty).join(', ') + ' (כולל מע"מ 18%)'
     });
-    showToast('✅ נמסר · חוב ' + fmt(total) + ' נרשם');
+    showToast('✅ נמסר · חוב ' + fmt(total) + ' (כולל מע"מ) נרשם');
   } else {
     showToast('✅ הזמנה נמסרה');
   }
@@ -1962,7 +2056,7 @@ function renderCustDetailOrders(cid) {
 
 function renderCustDetailDebts(cid) {
   const q = (document.getElementById('debt-search-cust')?.value || '').trim().toLowerCase();
-  let custDebts = DB.debts.filter(d => d.custId === cid && !d.closed && !d.isCredit).sort((a, b) => b.date.localeCompare(a.date));
+  let custDebts = DB.debts.filter(d => d.custId === cid && !d.closed).sort((a, b) => b.date.localeCompare(a.date));
   if (q) custDebts = custDebts.filter(d =>
     (d.docnum || '').toLowerCase().includes(q) ||
     (d.desc || '').toLowerCase().includes(q) ||
@@ -1973,10 +2067,24 @@ function renderCustDetailDebts(cid) {
   if (custDebts.length) {
     debtHtml = '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><button onclick="toggleSelectAllDebts(\'' + cid + '\')" style="font-size:12px;font-weight:700;color:var(--ac);background:none;border:none;cursor:pointer" id="btn-sel-all-' + cid + '">☐ בחר הכל</button><button onclick="deleteSelectedDebts(\'' + cid + '\')" style="font-size:12px;font-weight:700;color:var(--rd);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:4px 10px;cursor:pointer;display:none" id="btn-del-sel-' + cid + '">🗑️ מחק נבחרים</button></div>';
     custDebts.forEach(d => {
+      const isCredit = d.isCredit;
       const age = daysDiff(d.date);
       const ageColor = age > 60 ? 'var(--rd)' : age > 30 ? 'var(--yw)' : 'var(--t2)';
-      const remaining = Number(d.amount) - (d.paidAmount || 0);
-      debtHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--br)"><input type="checkbox" id="chk-' + d.id + '" onchange="onDebtCheck(\'' + cid + '\')" style="width:18px;height:18px;accent-color:var(--ac);flex-shrink:0;cursor:pointer"><div style="flex:1"><div style="display:flex;align-items:center;gap:6px">' + (d.docnum ? '<span style="background:var(--s3);border:1px solid var(--br);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800">#' + d.docnum + '</span>' : '') + '<span style="font-size:13px;font-weight:800;color:var(--rd)">' + fmt(remaining) + '</span>' + (d.paidAmount ? '<span style="font-size:10px;color:var(--yw)">שולם חלק ' + fmt(d.paidAmount) + '</span>' : '') + '</div>' + (d.desc ? '<div style="font-size:11px;color:var(--t2);margin-top:2px">' + d.desc + '</div>' : '') + '</div><div style="text-align:left"><div style="font-size:11px;color:var(--t2)">' + fmtDate(d.date) + '</div><div style="font-size:10px;font-weight:800;color:' + ageColor + '">' + age + ' יום</div></div></div>';
+      const remaining = isCredit ? Math.abs(Number(d.amount)) : Number(d.amount) - (d.paidAmount || 0);
+      const amtColor = isCredit ? 'var(--gr)' : 'var(--rd)';
+      const amtPrefix = isCredit ? '+' : '';
+      const label = isCredit ? '✚ זיכוי' : '';
+      debtHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--br);' + (isCredit ? 'background:rgba(16,185,129,.04);border-radius:8px;padding:10px 6px;' : '') + '">' +
+        (isCredit ? '' : '<input type="checkbox" id="chk-' + d.id + '" onchange="onDebtCheck(\'' + cid + '\')" style="width:18px;height:18px;accent-color:var(--ac);flex-shrink:0;cursor:pointer">') +
+        '<div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+        (isCredit ? '<span style="font-size:11px;font-weight:800;color:var(--gr);background:rgba(16,185,129,.15);border-radius:6px;padding:2px 6px">✚ זיכוי</span>' : '') +
+        (d.docnum ? '<span style="background:var(--s3);border:1px solid var(--br);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800">#' + d.docnum + '</span>' : '') +
+        '<span style="font-size:13px;font-weight:800;color:' + amtColor + '">' + amtPrefix + fmt(remaining) + '</span>' +
+        (!isCredit && d.paidAmount ? '<span style="font-size:10px;color:var(--yw)">שולם חלק ' + fmt(d.paidAmount) + '</span>' : '') +
+        '</div>' + (d.desc ? '<div style="font-size:11px;color:var(--t2);margin-top:2px">' + d.desc + '</div>' : '') +
+        '</div><div style="text-align:left"><div style="font-size:11px;color:var(--t2)">' + fmtDate(d.date) + '</div>' +
+        (!isCredit ? '<div style="font-size:10px;font-weight:800;color:' + ageColor + '">' + age + ' יום</div>' : '') +
+        '</div></div>';
     });
     debtHtml += '</div>';
   } else {
@@ -2101,25 +2209,119 @@ function openPaymentModal(cid) {
   document.getElementById('pay-check').value = '';
   document.getElementById('pay-check-date').value = '';
   document.getElementById('pay-docref').value = '';
+  document.getElementById('pay-transfer-ref').value = '';
   document.getElementById('pay-check-wrap').style.display = 'none';
-  document.getElementById('pay-check-date-wrap').style.display = 'none';
+  document.getElementById('pay-transfer-wrap').style.display = 'none';
   document.getElementById('pay-docref-wrap').style.display = 'none';
-  const sel = document.getElementById('pay-doc-select');
-  if (sel) {
-    const openDebts = DB.debts.filter(d => d.custId === cid && !d.closed && !d.isCredit);
-    sel.innerHTML = '<option value="">-- ללא שיוך --</option>' + openDebts.map(d => {
-      const remaining = Number(d.amount) - (d.paidAmount || 0);
-      return `<option value="${d.id}">#${d.docnum || ''} | נותר: ${fmt(remaining)}${d.desc ? ' | ' + d.desc : ''}</option>`;
-    }).join('');
-  }
+  document.getElementById('pay-check-alert').style.display = 'none';
+  document.getElementById('pay-check-info').style.display = 'none';
+  // Build multi-select docs checklist
+  _buildDocsChecklist(cid);
   openModal('modal-payment');
+}
+
+function _buildDocsChecklist(cid) {
+  const wrap = document.getElementById('pay-docs-checklist');
+  const totalEl = document.getElementById('pay-docs-total');
+  if (!wrap) return;
+  const openDebts = DB.debts.filter(d => d.custId === cid && !d.closed && !d.isCredit);
+  if (!openDebts.length) {
+    wrap.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--t2);text-align:center">אין חובות פתוחים</div>';
+    if (totalEl) totalEl.textContent = '';
+    return;
+  }
+  wrap.innerHTML = openDebts.map(d => {
+    const remaining = Number(d.amount) - (d.paidAmount || 0);
+    return `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--br)" onclick="event.stopPropagation()">
+      <input type="checkbox" id="paydoc-${d.id}" value="${d.id}" data-remaining="${remaining}" onchange="_updateDocsTotal()" style="width:16px;height:16px;accent-color:var(--ac);cursor:pointer">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700">${d.docnum ? '#' + d.docnum : 'ללא מס׳'} ${d.desc ? '· ' + d.desc : ''}</div>
+        <div style="font-size:11px;color:var(--t2)">${fmtDate(d.date)}</div>
+      </div>
+      <span style="font-size:13px;font-weight:800;color:var(--rd)">${fmt(remaining)}</span>
+    </label>`;
+  }).join('');
+  if (totalEl) totalEl.textContent = '';
+}
+
+function _updateDocsTotal() {
+  let total = 0;
+  document.querySelectorAll('#pay-docs-checklist input[type=checkbox]:checked').forEach(cb => {
+    total += Number(cb.dataset.remaining || 0);
+  });
+  const totalEl = document.getElementById('pay-docs-total');
+  const amtEl = document.getElementById('pay-amount');
+  if (totalEl) totalEl.textContent = total > 0 ? 'סה"כ מסמכים נבחרים: ' + fmt(total) : '';
+  if (amtEl && !amtEl.value) amtEl.value = total > 0 ? total : '';
+}
+
+function calcCheckDeadline(cid) {
+  const cust = getCust(cid); if (!cust || !cust.terms) return null;
+  const terms = parseInt(cust.terms); if (isNaN(terms)) return null;
+  const now = new Date();
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const deadline = new Date(endOfMonth);
+  deadline.setDate(deadline.getDate() + terms);
+  return deadline;
+}
+
+function onCheckDateChange() {
+  const checkDateVal = document.getElementById('pay-check-date').value;
+  const alertEl = document.getElementById('pay-check-alert');
+  const infoEl = document.getElementById('pay-check-info');
+  if (!checkDateVal) { alertEl.style.display='none'; infoEl.style.display='none'; return; }
+  const deadline = calcCheckDeadline(activeCid);
+  if (!deadline) { alertEl.style.display='none'; infoEl.style.display='none'; return; }
+  const checkDate = new Date(checkDateVal);
+  const deadlineStr = deadline.toLocaleDateString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric' });
+  if (checkDate > deadline) {
+    alertEl.style.display = 'block';
+    alertEl.textContent = '⚠️ תאריך השיק (' + checkDate.toLocaleDateString('he-IL') + ') חורג מהשוטף! דדליין גבייה: ' + deadlineStr;
+    infoEl.style.display = 'none';
+  } else {
+    infoEl.style.display = 'block';
+    infoEl.textContent = '✓ תאריך השיק בסדר · דדליין שוטף: ' + deadlineStr;
+    alertEl.style.display = 'none';
+  }
+}
+
+function onPayAmountChange() { /* hook for future */ }
+
+function openPaymentGeneral() {
+  // Open payment modal with customer selector
+  const cust = DB.customers.filter(c => c.active);
+  if (!cust.length) { alert('אין לקוחות פעילים'); return; }
+  // Build simple picker overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:20px';
+  overlay.innerHTML = `<div style="background:var(--sf);border-radius:20px 20px 0 0;width:100%;max-width:430px;padding:20px;max-height:70vh;overflow-y:auto">
+    <div style="font-size:16px;font-weight:800;margin-bottom:14px;text-align:center">בחר לקוח לתשלום</div>
+    ${cust.sort((a,b)=>a.name.localeCompare(b.name,'he')).map(c => `<div onclick="this.closest('[style*=fixed]').remove();openPaymentModal('${c.id}')"
+      style="padding:12px;border:1px solid var(--br);border-radius:12px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:700">${c.name}</span>
+      <span style="color:${totalDebt(c.id)>0?'var(--rd)':'var(--gr)'};font-weight:800">${fmt(Math.abs(totalDebt(c.id)))}</span>
+    </div>`).join('')}
+    <button onclick="this.closest('[style*=fixed]').remove()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--br);background:var(--s2);color:var(--tx);font-size:14px;cursor:pointer;margin-top:8px">ביטול</button>
+  </div>`;
+  document.body.appendChild(overlay);
 }
 
 function onPayMethodChange() {
   const m = document.getElementById('pay-method').value;
   document.getElementById('pay-check-wrap').style.display = m === 'שיק' ? 'block' : 'none';
-  document.getElementById('pay-check-date-wrap').style.display = m === 'שיק' ? 'block' : 'none';
+  document.getElementById('pay-transfer-wrap').style.display = m === 'העברה' ? 'block' : 'none';
   document.getElementById('pay-docref-wrap').style.display = m === 'זיכוי' ? 'block' : 'none';
+  document.getElementById('pay-check-alert').style.display = 'none';
+  document.getElementById('pay-check-info').style.display = 'none';
+  // Show deadline info immediately for check
+  if (m === 'שיק') {
+    const deadline = calcCheckDeadline(activeCid);
+    if (deadline) {
+      const infoEl = document.getElementById('pay-check-info');
+      infoEl.style.display = 'block';
+      infoEl.textContent = 'דדליין שוטף: ' + deadline.toLocaleDateString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric' });
+    }
+  }
 }
 
 function savePayment() {
@@ -2127,40 +2329,76 @@ function savePayment() {
   const method = document.getElementById('pay-method').value;
   const payDate = document.getElementById('pay-date').value;
   const note = document.getElementById('pay-note').value.trim();
-  const docSel = document.getElementById('pay-doc-select').value;
   if (!amt || amt <= 0) { alert('נא להזין סכום'); return; }
-  if (!note) { alert('הערה היא שדה חובה'); return; }
 
-  let checkNum = '', checkDate = '', docRef = '';
+  // ── זיכוי → נרשם כחוב ירוק תחת חובות הלקוח ──
+  if (method === 'זיכוי') {
+    const docRef = document.getElementById('pay-docref').value.trim();
+    if (!docRef) { alert('מספר מסמך הוא חובה לזיכוי'); return; }
+    DB.debts.push({
+      id: uid(), custId: activeCid, amount: -Math.abs(amt),
+      docnum: docRef, date: payDate,
+      desc: 'זיכוי' + (note ? ' — ' + note : ''),
+      isCredit: true, closed: false   // ← not closed, shows in debts list as green
+    });
+    save(); renderAll(); closeModal('modal-payment');
+    showToast('זיכוי נרשם ✅ ' + fmt(amt));
+    if (activeCid && document.getElementById('modal-cust-detail').classList.contains('open')) {
+      renderCustDetailDebts(activeCid); setCustDetailTab('debts');
+    }
+    return;
+  }
+
+  // ── שיק — וידוא שדות ──
+  let checkNum = '', checkDate = '';
   if (method === 'שיק') {
     checkNum = document.getElementById('pay-check').value.trim();
     checkDate = document.getElementById('pay-check-date').value;
     if (!checkNum) { alert('מספר שיק הוא חובה'); return; }
-  }
-  if (method === 'זיכוי') {
-    docRef = document.getElementById('pay-docref').value.trim();
-    if (!docRef) { alert('מספר מסמך הוא חובה לזיכוי'); return; }
-    DB.debts.push({ id: uid(), custId: activeCid, amount: -Math.abs(amt), docnum: docRef, date: payDate, desc: 'זיכוי' + (note ? ' — ' + note : ''), isCredit: true, closed: true });
-    save(); renderAll(); closeModal('modal-payment');
-    showToast('זיכוי נרשם ✅ ' + fmt(amt));
-    if (activeCid && document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailDebts(activeCid); setCustDetailTab('debts'); }
-    return;
-  }
-
-  if (docSel) {
-    const debt = DB.debts.find(d => d.id === docSel);
-    if (debt) {
-      const alreadyPaid = debt.paidAmount || 0;
-      const remaining = Number(debt.amount) - alreadyPaid;
-      if (amt >= remaining) { debt.paidAmount = Number(debt.amount); debt.closed = true; debt.closedDate = payDate; }
-      else { debt.paidAmount = alreadyPaid + amt; }
+    if (!checkDate) { alert('תאריך שיק הוא חובה'); return; }
+    // warn if check date exceeds deadline (but allow to continue)
+    const deadline = calcCheckDeadline(activeCid);
+    if (deadline && new Date(checkDate) > deadline) {
+      const deadlineStr = deadline.toLocaleDateString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric' });
+      if (!confirm('⚠️ תאריך השיק חורג מהשוטף! דדליין גבייה: ' + deadlineStr + '. להמשיך בכל זאת?')) return;
     }
   }
 
-  DB.payments.push({ id: uid(), custId: activeCid, amount: amt, method, date: payDate, note, check: checkNum, checkDate, linkedDoc: docSel || null });
+  // ── העברה — מספר אסמכתא ──
+  let transferRef = '';
+  if (method === 'העברה') {
+    transferRef = document.getElementById('pay-transfer-ref').value.trim();
+  }
+
+  // ── סגירת מסמכים מרובים ──
+  const checkedDocs = [];
+  document.querySelectorAll('#pay-docs-checklist input[type=checkbox]:checked').forEach(cb => {
+    checkedDocs.push(cb.value);
+  });
+
+  let remaining = amt;
+  checkedDocs.forEach(docId => {
+    if (remaining <= 0) return;
+    const debt = DB.debts.find(d => d.id === docId); if (!debt) return;
+    const debtRemaining = Number(debt.amount) - (debt.paidAmount || 0);
+    const toApply = Math.min(remaining, debtRemaining);
+    debt.paidAmount = (debt.paidAmount || 0) + toApply;
+    if (debt.paidAmount >= Number(debt.amount)) { debt.closed = true; debt.closedDate = payDate; }
+    remaining -= toApply;
+  });
+
+  DB.payments.push({
+    id: uid(), custId: activeCid, amount: amt, method,
+    date: payDate, note: note || '',
+    check: checkNum, checkDate,
+    transferRef,
+    linkedDocs: checkedDocs
+  });
   save(); renderAll(); closeModal('modal-payment');
   showToast('תשלום נרשם ✅ ' + fmt(amt));
-  if (document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailDebts(activeCid); setCustDetailTab('debts'); }
+  if (document.getElementById('modal-cust-detail').classList.contains('open')) {
+    renderCustDetailDebts(activeCid); setCustDetailTab('debts');
+  }
 }
 
 // ===================== DEBT =====================
@@ -2336,28 +2574,122 @@ function openReport() {
 function renderHistory() {
   const q = (document.getElementById('hist-search')?.value || '').toLowerCase();
   const methodMap = { cash: 'מזומן', check: 'שיק', transfer: 'העברה', credit: 'זיכוי' };
+  const moNames = ['', 'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+  const methodIcon = { 'מזומן': '💵', 'שיק': '📝', 'העברה': '🏦', 'זיכוי': '💰' };
+  const m = new Date().toISOString().substr(0, 7);
+
+  // Build unified list
+  let items = [];
+
+  if (histTab === 'debts') {
+    // Only debts
+    let debts = [...DB.debts].sort((a, b) => b.date.localeCompare(a.date));
+    if (q) debts = debts.filter(d => { const c = getCust(d.custId); return (c && c.name.toLowerCase().includes(q)) || (d.docnum || '').toLowerCase().includes(q) || (d.desc || '').toLowerCase().includes(q) || String(d.amount).includes(q); });
+    const totalD = debts.reduce((s, d) => s + Math.abs(Number(d.amount)), 0);
+    const thisMonthD = debts.filter(d => d.date.startsWith(m)).reduce((s, d) => s + Math.abs(Number(d.amount)), 0);
+    document.getElementById('hist-stats').innerHTML = '<div class="sbox r"><div class="sv r">' + fmt(totalD) + '</div><div class="sl">סה"כ חובות</div></div><div class="sbox b"><div class="sv b">' + fmt(thisMonthD) + '</div><div class="sl">החודש</div></div>';
+    if (!debts.length) { document.getElementById('hist-list').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">אין חובות</div></div>'; return; }
+    const groups = {};
+    debts.forEach(d => { const mo = d.date.substr(0, 7); if (!groups[mo]) groups[mo] = []; groups[mo].push(d); });
+    let html = '';
+    Object.keys(groups).sort((a, b) => b.localeCompare(a)).forEach(mo => {
+      const ds = groups[mo];
+      const moTotal = ds.reduce((s, d) => s + Math.abs(Number(d.amount)), 0);
+      const [yr, mn] = mo.split('-');
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 6px;margin-top:6px"><span style="font-size:12px;font-weight:700;color:var(--t2)">${moNames[parseInt(mn)]} ${yr}</span><span style="font-size:13px;font-weight:800;color:var(--rd)">${fmt(moTotal)}</span></div>`;
+      ds.forEach(d => {
+        const c = getCust(d.custId);
+        const isC = d.isCredit;
+        const color = isC ? 'var(--gr)' : 'var(--rd)';
+        const icon = isC ? '💚' : '📋';
+        const remaining = isC ? Math.abs(Number(d.amount)) : Number(d.amount) - (d.paidAmount || 0);
+        html += `<div style="background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer" onclick="openCustDetail('${d.custId}')">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:40px;height:40px;border-radius:11px;background:var(--s2);border:1px solid var(--br);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${icon}</div>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:700">${c ? c.name : 'לא ידוע'}</div>
+              <div style="font-size:11px;color:var(--t2);margin-top:2px">${d.docnum ? '#' + d.docnum + ' · ' : ''}${d.desc || (isC ? 'זיכוי' : 'חוב')}${d.closed ? ' ✓' : ''}</div>
+            </div>
+            <div style="text-align:left">
+              <div style="font-size:16px;font-weight:900;color:${color}">${isC ? '+' : ''}${fmt(remaining)}</div>
+              <div style="font-size:11px;color:var(--t2)">${fmtDate(d.date)}</div>
+            </div>
+          </div>
+        </div>`;
+      });
+    });
+    document.getElementById('hist-list').innerHTML = html;
+    return;
+  }
+
+  // Payments tab (all / cash / check / transfer / credit)
   let list = [...DB.payments].sort((a, b) => b.date.localeCompare(a.date));
   if (histTab !== 'all') list = list.filter(p => p.method === methodMap[histTab]);
   if (q) list = list.filter(p => { const c = getCust(p.custId); return (c && c.name.toLowerCase().includes(q)) || String(p.amount).includes(q) || (p.note || '').toLowerCase().includes(q); });
-  const total = list.reduce((s, p) => s + Number(p.amount), 0);
-  const m = new Date().toISOString().substr(0, 7);
-  const thisMonth = list.filter(p => p.date.startsWith(m)).reduce((s, p) => s + Number(p.amount), 0);
-  document.getElementById('hist-stats').innerHTML = '<div class="sbox g"><div class="sv g">' + fmt(total) + '</div><div class="sl">סה"כ גבוי</div></div><div class="sbox b"><div class="sv b">' + fmt(thisMonth) + '</div><div class="sl">החודש</div></div>';
-  if (!list.length) { document.getElementById('hist-list').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">אין תשלומים</div></div>'; return; }
+
+  // On 'all', also include debts
+  let allItems = [];
+  if (histTab === 'all') {
+    list.forEach(p => allItems.push({ _type: 'pay', date: p.date, data: p }));
+    let debts = [...DB.debts].filter(d => !d.isCredit);
+    if (q) debts = debts.filter(d => { const c = getCust(d.custId); return (c && c.name.toLowerCase().includes(q)) || (d.docnum || '').toLowerCase().includes(q) || (d.desc || '').toLowerCase().includes(q); });
+    debts.forEach(d => allItems.push({ _type: 'debt', date: d.date, data: d }));
+    let credits = [...DB.debts].filter(d => d.isCredit);
+    if (q) credits = credits.filter(d => { const c = getCust(d.custId); return (c && c.name.toLowerCase().includes(q)) || (d.docnum || '').includes(q); });
+    credits.forEach(d => allItems.push({ _type: 'credit', date: d.date, data: d }));
+    allItems.sort((a, b) => b.date.localeCompare(a.date));
+  } else {
+    list.forEach(p => allItems.push({ _type: 'pay', date: p.date, data: p }));
+  }
+
+  const totalPay = list.reduce((s, p) => s + Number(p.amount), 0);
+  const thisMonthPay = list.filter(p => p.date.startsWith(m)).reduce((s, p) => s + Number(p.amount), 0);
+  document.getElementById('hist-stats').innerHTML = '<div class="sbox g"><div class="sv g">' + fmt(totalPay) + '</div><div class="sl">סה"כ גבוי</div></div><div class="sbox b"><div class="sv b">' + fmt(thisMonthPay) + '</div><div class="sl">החודש</div></div>';
+  if (!allItems.length) { document.getElementById('hist-list').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">אין רשומות</div></div>'; return; }
+
   const groups = {};
-  list.forEach(p => { const mo = p.date.substr(0, 7); if (!groups[mo]) groups[mo] = []; groups[mo].push(p); });
-  const methodIcon = { 'מזומן': '💵', 'שיק': '📝', 'העברה': '🏦', 'זיכוי': '💰' };
+  allItems.forEach(item => { const mo = item.date.substr(0, 7); if (!groups[mo]) groups[mo] = []; groups[mo].push(item); });
   let html = '';
   Object.keys(groups).sort((a, b) => b.localeCompare(a)).forEach(mo => {
     const ps = groups[mo];
-    const moTotal = ps.reduce((s, p) => s + Number(p.amount), 0);
+    const moTotal = ps.filter(x => x._type === 'pay').reduce((s, x) => s + Number(x.data.amount), 0);
     const [yr, mn] = mo.split('-');
-    const moNames = ['', 'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
-    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 6px;margin-top:6px"><span style="font-size:12px;font-weight:700;color:var(--t2);letter-spacing:.5px">${moNames[parseInt(mn)]} ${yr}</span><span style="font-size:13px;font-weight:800;color:var(--gr)">${fmt(moTotal)}</span></div>`;
-    ps.forEach(p => {
-      const c = getCust(p.custId);
-      const icon = methodIcon[p.method] || '💰';
-      html += `<div style="background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer" onclick="openCustDetail('${p.custId}')"><div style="display:flex;align-items:center;gap:12px"><div style="width:40px;height:40px;border-radius:11px;background:var(--s2);border:1px solid var(--br);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${icon}</div><div style="flex:1"><div style="font-size:14px;font-weight:700">${c ? c.name : 'לא ידוע'}</div><div style="font-size:11px;color:var(--t2);margin-top:2px">${p.method}${p.check ? ' · שיק #' + p.check : ''}${p.note ? ' · ' + p.note : ''}</div></div><div style="text-align:left"><div style="font-size:16px;font-weight:900;color:var(--gr)">${fmt(p.amount)}</div><div style="font-size:11px;color:var(--t2)">${fmtDate(p.date)}</div></div></div></div>`;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 6px;margin-top:6px"><span style="font-size:12px;font-weight:700;color:var(--t2)">${moNames[parseInt(mn)]} ${yr}</span>${moTotal > 0 ? '<span style="font-size:13px;font-weight:800;color:var(--gr)">' + fmt(moTotal) + '</span>' : ''}</div>`;
+    ps.forEach(item => {
+      const c = getCust(item.data.custId);
+      if (item._type === 'pay') {
+        const p = item.data;
+        const icon = methodIcon[p.method] || '💰';
+        html += `<div style="background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer" onclick="openCustDetail('${p.custId}')">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:40px;height:40px;border-radius:11px;background:var(--s2);border:1px solid var(--br);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${icon}</div>
+            <div style="flex:1"><div style="font-size:14px;font-weight:700">${c ? c.name : 'לא ידוע'}</div>
+            <div style="font-size:11px;color:var(--t2);margin-top:2px">${p.method}${p.check ? ' · שיק #' + p.check : ''}${p.transferRef ? ' · אסמכתא: ' + p.transferRef : ''}${p.note ? ' · ' + p.note : ''}</div></div>
+            <div style="text-align:left"><div style="font-size:16px;font-weight:900;color:var(--gr)">${fmt(p.amount)}</div><div style="font-size:11px;color:var(--t2)">${fmtDate(p.date)}</div></div>
+          </div>
+        </div>`;
+      } else if (item._type === 'debt') {
+        const d = item.data;
+        const remaining = Number(d.amount) - (d.paidAmount || 0);
+        html += `<div style="background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.2);border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer" onclick="openCustDetail('${d.custId}')">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:40px;height:40px;border-radius:11px;background:rgba(239,68,68,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📋</div>
+            <div style="flex:1"><div style="font-size:14px;font-weight:700">${c ? c.name : 'לא ידוע'}</div>
+            <div style="font-size:11px;color:var(--t2);margin-top:2px">${d.docnum ? '#' + d.docnum + ' · ' : ''}${d.desc || 'חוב'}${d.closed ? ' ✓' : ''}</div></div>
+            <div style="text-align:left"><div style="font-size:16px;font-weight:900;color:var(--rd)">${fmt(remaining)}</div><div style="font-size:11px;color:var(--t2)">${fmtDate(d.date)}</div></div>
+          </div>
+        </div>`;
+      } else {
+        const d = item.data;
+        html += `<div style="background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.2);border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer" onclick="openCustDetail('${d.custId}')">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:40px;height:40px;border-radius:11px;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">💚</div>
+            <div style="flex:1"><div style="font-size:14px;font-weight:700">${c ? c.name : 'לא ידוע'}</div>
+            <div style="font-size:11px;color:var(--t2);margin-top:2px">זיכוי${d.docnum ? ' #' + d.docnum : ''}${d.desc ? ' · ' + d.desc : ''}</div></div>
+            <div style="text-align:left"><div style="font-size:16px;font-weight:900;color:var(--gr)">+${fmt(Math.abs(d.amount))}</div><div style="font-size:11px;color:var(--t2)">${fmtDate(d.date)}</div></div>
+          </div>
+        </div>`;
+      }
     });
   });
   document.getElementById('hist-list').innerHTML = html;

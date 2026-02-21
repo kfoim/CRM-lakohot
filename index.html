@@ -559,6 +559,11 @@ textarea.fi { resize: none; }
     <div class="sbox p"><div class="sv p" id="ord-pending">0</div><div class="sl">ממתינות</div></div>
     <div class="sbox g"><div class="sv g" id="ord-today">0</div><div class="sl">הזמנות היום</div></div>
   </div>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button onclick="openOrderPicker()" style="flex:1;padding:11px;border-radius:12px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);color:var(--ac);font-size:13px;font-weight:700;cursor:pointer">🛒 הזמנה חדשה</button>
+    <button onclick="openInventoryPicker()" style="flex:1;padding:11px;border-radius:12px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--gr);font-size:13px;font-weight:700;cursor:pointer">📦 עדכן מלאי</button>
+    <button onclick="openModal('modal-catalog');renderCatalogModal()" style="padding:11px 14px;border-radius:12px;background:var(--s2);border:1px solid var(--br);color:var(--t2);font-size:13px;font-weight:700;cursor:pointer">📋</button>
+  </div>
   <div class="tabs">
     <div class="tab active" onclick="setOrdTab(this,'all')">הכל</div>
     <div class="tab" onclick="setOrdTab(this,'pending')">ממתין</div>
@@ -817,7 +822,17 @@ textarea.fi { resize: none; }
     <div class="shandle"></div>
     <div class="shead"><span class="stitle">📦 מוצר ברשימת לקוח</span><button class="xbtn" onclick="closeModal('modal-cust-inv-form')">✕</button></div>
     <div class="sbody">
-      <div class="fg"><label class="fl">שם מוצר *</label><input class="fi" id="cif-name" placeholder="גלידה שוקולד 1ק״ג"></div>
+      <!-- Catalog picker (shown when adding new) -->
+      <div id="cif-catalog-section">
+        <label class="fl">בחר מהקטלוג</label>
+        <div style="position:relative;margin-bottom:8px">
+          <input class="fi" id="cif-catalog-search" placeholder="חיפוש במוצרי החברה..." autocomplete="off"
+            oninput="filterCatalogDrop()" onfocus="filterCatalogDrop()" style="font-size:13px" dir="rtl">
+          <div id="cif-catalog-drop" style="display:none;position:absolute;right:0;left:0;top:100%;margin-top:2px;background:var(--sf);border:1px solid var(--br2);border-radius:10px;z-index:9999;max-height:160px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5)"></div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--t2);margin-bottom:10px">— או הזן מוצר חדש —</div>
+      </div>
+      <div class="fg"><label class="fl">שם מוצר *</label><input class="fi" id="cif-name" placeholder="גלידה שוקולד 1ק״ג" oninput="onCifNameInput()"></div>
       <div class="fg"><label class="fl">קטגוריה</label>
         <select class="fi" id="cif-cat">
           <option value="icecream">🍦 גלידות</option>
@@ -1014,6 +1029,82 @@ textarea.fi { resize: none; }
   </div>
 </div>
 
+<!-- ORDER PICKER -->
+
+<div class="overlay" id="modal-order-picker">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shead"><span class="stitle">🛒 הזמנה חדשה</span><button class="xbtn" onclick="closeModal('modal-order-picker')">✕</button></div>
+    <div class="sbody">
+      <div class="sbar" style="margin-bottom:12px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="חיפוש לקוח..." id="ordpick-search" oninput="renderOrderPicker()"
+          style="flex:1;background:none;border:none;outline:none;color:var(--tx);font-family:'Heebo',sans-serif;font-size:13px;text-align:right">
+      </div>
+      <div id="ordpick-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- INVENTORY PICKER (add/update stock for a customer) -->
+
+<div class="overlay" id="modal-inv-picker">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shead"><span class="stitle">📦 עדכון מלאי לקוח</span><button class="xbtn" onclick="closeModal('modal-inv-picker')">✕</button></div>
+    <div class="sbody">
+      <div class="sbar" style="margin-bottom:12px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="חיפוש לקוח..." id="invpick-search" oninput="renderInventoryPicker()"
+          style="flex:1;background:none;border:none;outline:none;color:var(--tx);font-family:'Heebo',sans-serif;font-size:13px;text-align:right">
+      </div>
+      <div id="invpick-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CATALOG MODAL -->
+
+<div class="overlay" id="modal-catalog">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shead"><span class="stitle">📋 קטלוג מוצרי החברה</span><button class="xbtn" onclick="closeModal('modal-catalog')">✕</button></div>
+    <div class="sbody">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div class="sbar" style="flex:1;margin-bottom:0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="חיפוש..." id="cat-search" oninput="renderCatalogModal()" style="flex:1;background:none;border:none;outline:none;color:var(--tx);font-family:'Heebo',sans-serif;font-size:13px;text-align:right">
+        </div>
+        <button onclick="openAddCatalogProduct()" style="padding:0 14px;border-radius:12px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.35);color:var(--ac);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">+ מוצר חדש</button>
+      </div>
+      <div id="cat-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT CATALOG PRODUCT -->
+
+<div class="overlay layer2" id="modal-catalog-prod">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shead"><span class="stitle" id="catprod-title">📦 מוצר חדש בקטלוג</span><button class="xbtn" onclick="closeModal('modal-catalog-prod')">✕</button></div>
+    <div class="sbody">
+      <div class="fg"><label class="fl">שם מוצר *</label><input class="fi" id="catprod-name" placeholder="גלידה שוקולד 1ק״ג"></div>
+      <div class="fg"><label class="fl">קטגוריה</label>
+        <select class="fi" id="catprod-cat">
+          <option value="icecream">🍦 גלידות</option>
+          <option value="vegetables">🥦 ירקות קפואים</option>
+          <option value="dough">🥐 מוצרי בצק</option>
+          <option value="fruit">🍓 פירות קפואים</option>
+          <option value="other">📦 אחר</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">מחיר מכירה ₪</label><input class="fi" id="catprod-price" type="number" placeholder="0" dir="ltr"></div>
+      <button class="btnp" id="catprod-save-btn" onclick="saveCatalogProduct()">שמור ✓</button>
+    </div>
+  </div>
+</div>
+
 <!-- EQUIPMENT DETAIL -->
 
 <div class="overlay" id="modal-eq-detail">
@@ -1069,9 +1160,12 @@ textarea.fi { resize: none; }
     <div class="shead"><span class="stitle">➕ הוספה חדשה</span><button class="xbtn" onclick="closeModal('modal-picker')">✕</button></div>
     <div class="sbody">
       <button class="btno" style="margin-top:0" onclick="closeModal('modal-picker');openModal('modal-add-cust')">👤 לקוח חדש</button>
-      <button class="btno" onclick="closeModal('modal-picker');openAddEq()">📦 ציוד חדש</button>
+      <button class="btno" onclick="closeModal('modal-picker');openAddEq()">🧊 ציוד חדש</button>
+      <button class="btno" onclick="closeModal('modal-picker');openOrderPicker()">🛒 הזמנה חדשה</button>
+      <button class="btno" onclick="closeModal('modal-picker');openInventoryPicker()">📦 עדכון מלאי</button>
       <button class="btno" onclick="closeModal('modal-picker');openAddDebtGeneral()">💸 חוב חדש</button>
       <button class="btno" onclick="closeModal('modal-picker');openPaymentGeneral()">✅ תשלום</button>
+      <button class="btno" onclick="closeModal('modal-picker');openModal('modal-catalog');renderCatalogModal()">📋 קטלוג מוצרים</button>
       <div style="margin-top:8px;padding:10px;background:var(--s3);border-radius:10px;font-size:12px;color:var(--t2);text-align:center">📦 מלאי והזמנות — פתח כרטיס לקוח</div>
     </div>
   </div>
@@ -1201,17 +1295,36 @@ const SK = 'crm_v5';
 function load() {
   try { const d = localStorage.getItem(SK); if (d) return JSON.parse(d); } catch(e) {}
   try { const old = localStorage.getItem('crm_v4'); if (old) { const db = JSON.parse(old); db.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; }); return db; } } catch(e) {}
-  return { customers: [], equipment: [], payments: [], debts: [], visits: [] };
+  return { customers: [], equipment: [], payments: [], debts: [], visits: [], catalog: [] };
 }
 function save() {
   if (!DB.visits) DB.visits = [];
+  if (!DB.catalog) DB.catalog = [];
   DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
   localStorage.setItem(SK, JSON.stringify(DB));
   saveToCloud();
 }
 let DB = load();
 if (!DB.visits) DB.visits = [];
+if (!DB.catalog) DB.catalog = [];
 DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
+
+// Migrate: scan all customers and populate catalog from their inventory
+(function migrateCatalog() {
+  DB.customers.forEach(c => {
+    (c.inventory || []).forEach(item => {
+      const existing = DB.catalog.find(p => p.name.trim().toLowerCase() === item.name.trim().toLowerCase());
+      if (!existing) {
+        DB.catalog.push({
+          id: 'cat_' + uid(),
+          name: item.name,
+          category: item.category || 'other',
+          salePrice: item.salePrice || 0
+        });
+      }
+    });
+  });
+})();
 function custInventory(cid) { const c = getCust(cid); return c ? (c.inventory || []) : []; }
 function custOrders(cid) { const c = getCust(cid); return c ? (c.orders || []) : []; }
 
@@ -1546,6 +1659,9 @@ const catNames = { icecream: 'גלידות', vegetables: 'ירקות', dough: '�
 function openCustInvItem(cid, iid) {
   const c = getCust(cid); if (!c) return;
   const item = (c.inventory || []).find(x => x.id === iid); if (!item) return;
+  // Hide catalog picker when editing
+  const catSection = document.getElementById('cif-catalog-section');
+  if (catSection) catSection.style.display = 'none';
   const qty = Number(item.qty);
   const minQty = Number(item.minQty || 0);
   const isLow = minQty > 0 && qty <= minQty;
@@ -1606,6 +1722,12 @@ function deleteCustInvItem(cid, iid) {
 }
 
 function openAddCustInv(cid) {
+  const catSection = document.getElementById('cif-catalog-section');
+  if (catSection) catSection.style.display = 'block';
+  const catSearch = document.getElementById('cif-catalog-search');
+  if (catSearch) catSearch.value = '';
+  const catDrop = document.getElementById('cif-catalog-drop');
+  if (catDrop) catDrop.style.display = 'none';
   document.getElementById('cif-name').value = '';
   document.getElementById('cif-cat').value = 'icecream';
   document.getElementById('cif-qty').value = '0';
@@ -1622,12 +1744,15 @@ function saveNewCustInv(cid) {
   const name = document.getElementById('cif-name').value.trim();
   if (!name) { alert('שם מוצר חובה'); return; }
   if (!c.inventory) c.inventory = [];
+  const category = document.getElementById('cif-cat').value;
+  const salePrice = Number(document.getElementById('cif-price').value) || 0;
+  // Sync with global catalog
+  getOrCreateCatalogProduct(name, category, salePrice);
   c.inventory.push({
-    id: uid(), name,
-    category: document.getElementById('cif-cat').value,
+    id: uid(), name, category,
     qty: Number(document.getElementById('cif-qty').value) || 0,
     minQty: Number(document.getElementById('cif-min').value) || 0,
-    salePrice: Number(document.getElementById('cif-price').value) || 0,
+    salePrice,
     expiry: document.getElementById('cif-exp').value,
     notes: document.getElementById('cif-notes').value.trim(),
     created: today()
@@ -1642,11 +1767,15 @@ function saveCustInvEdit(cid, iid) {
   const item = (c.inventory || []).find(x => x.id === iid); if (!item) return;
   const name = document.getElementById('cif-name').value.trim();
   if (!name) { alert('שם מוצר חובה'); return; }
+  const category = document.getElementById('cif-cat').value;
+  const salePrice = Number(document.getElementById('cif-price').value) || 0;
+  // Sync with global catalog
+  getOrCreateCatalogProduct(name, category, salePrice);
   item.name = name;
-  item.category = document.getElementById('cif-cat').value;
+  item.category = category;
   item.qty = Number(document.getElementById('cif-qty').value) || 0;
   item.minQty = Number(document.getElementById('cif-min').value) || 0;
-  item.salePrice = Number(document.getElementById('cif-price').value) || 0;
+  item.salePrice = salePrice;
   item.expiry = document.getElementById('cif-exp').value;
   item.notes = document.getElementById('cif-notes').value.trim();
   save(); renderAll(); closeModal('modal-cust-inv-form');
@@ -3299,6 +3428,194 @@ function showImportResult(type, msg) {
   el.style.color = type === 'ok' ? 'var(--gr)' : 'var(--rd)';
   el.style.border = type === 'ok' ? '1px solid rgba(16,185,129,.3)' : '1px solid rgba(239,68,68,.3)';
   el.textContent = msg;
+}
+
+
+// ===================== GLOBAL CATALOG =====================
+
+function getOrCreateCatalogProduct(name, category, salePrice) {
+  if (!DB.catalog) DB.catalog = [];
+  const norm = name.trim().toLowerCase();
+  let prod = DB.catalog.find(p => p.name.trim().toLowerCase() === norm);
+  if (!prod) {
+    prod = { id: 'cat_' + uid(), name: name.trim(), category: category || 'other', salePrice: salePrice || 0 };
+    DB.catalog.push(prod);
+  } else {
+    // update price if provided and different
+    if (salePrice && salePrice !== prod.salePrice) prod.salePrice = salePrice;
+    if (category) prod.category = category;
+  }
+  return prod;
+}
+
+// Catalog modal render
+function renderCatalogModal() {
+  if (!DB.catalog) DB.catalog = [];
+  const q = (document.getElementById('cat-search')?.value || '').toLowerCase();
+  let prods = [...DB.catalog].sort((a, b) => a.name.localeCompare(b.name, 'he'));
+  if (q) prods = prods.filter(p => p.name.toLowerCase().includes(q) || (catNames[p.category] || '').toLowerCase().includes(q));
+  const el = document.getElementById('cat-list');
+  if (!el) return;
+  el.innerHTML = prods.length ? prods.map(p => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--br)">
+      <div style="font-size:20px">${catIcons[p.category] || '📦'}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700">${p.name}</div>
+        <div style="font-size:11px;color:var(--t2)">${catNames[p.category] || ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:13px;font-weight:700;color:var(--ac)">${p.salePrice ? fmt(p.salePrice) : '—'}</span>
+        <button onclick="openEditCatalogProduct('${p.id}')" style="font-size:11px;padding:4px 8px;border-radius:8px;border:1px solid var(--br);background:var(--s2);color:var(--tx);cursor:pointer">✏️</button>
+        <button onclick="deleteCatalogProduct('${p.id}')" style="font-size:11px;padding:4px 8px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:var(--rd);cursor:pointer">🗑️</button>
+      </div>
+    </div>`).join('')
+    : '<div style="color:var(--t2);font-size:13px;padding:20px;text-align:center">הקטלוג ריק — הוסף מוצר</div>';
+}
+
+function openAddCatalogProduct() {
+  document.getElementById('catprod-title').textContent = '📦 מוצר חדש בקטלוג';
+  document.getElementById('catprod-name').value = '';
+  document.getElementById('catprod-cat').value = 'icecream';
+  document.getElementById('catprod-price').value = '';
+  document.getElementById('catprod-save-btn').onclick = () => saveCatalogProduct(null);
+  openModal('modal-catalog-prod');
+}
+
+function openEditCatalogProduct(pid) {
+  const p = DB.catalog.find(x => x.id === pid); if (!p) return;
+  document.getElementById('catprod-title').textContent = '✏️ עריכת מוצר';
+  document.getElementById('catprod-name').value = p.name;
+  document.getElementById('catprod-cat').value = p.category || 'other';
+  document.getElementById('catprod-price').value = p.salePrice || '';
+  document.getElementById('catprod-save-btn').onclick = () => saveCatalogProduct(pid);
+  openModal('modal-catalog-prod');
+}
+
+function saveCatalogProduct(pid) {
+  const name = document.getElementById('catprod-name').value.trim();
+  if (!name) { alert('נא להזין שם מוצר'); return; }
+  const category = document.getElementById('catprod-cat').value;
+  const salePrice = Number(document.getElementById('catprod-price').value) || 0;
+  if (!DB.catalog) DB.catalog = [];
+  if (pid) {
+    const p = DB.catalog.find(x => x.id === pid);
+    if (p) { p.name = name; p.category = category; p.salePrice = salePrice; }
+  } else {
+    if (DB.catalog.find(p => p.name.trim().toLowerCase() === name.toLowerCase())) {
+      alert('מוצר בשם זה כבר קיים בקטלוג'); return;
+    }
+    DB.catalog.push({ id: 'cat_' + uid(), name, category, salePrice });
+  }
+  save(); renderCatalogModal(); closeModal('modal-catalog-prod');
+  showToast((pid ? 'מוצר עודכן ✅' : 'מוצר נוסף לקטלוג ✅'));
+}
+
+function deleteCatalogProduct(pid) {
+  if (!confirm('למחוק מוצר זה מהקטלוג?')) return;
+  DB.catalog = DB.catalog.filter(p => p.id !== pid);
+  save(); renderCatalogModal(); showToast('מוצר נמחק');
+}
+
+// Catalog search dropdown in cif form
+function filterCatalogDrop() {
+  const q = (document.getElementById('cif-catalog-search')?.value || '').trim().toLowerCase();
+  const drop = document.getElementById('cif-catalog-drop'); if (!drop) return;
+  const prods = (DB.catalog || []).filter(p => !q || p.name.toLowerCase().includes(q)).slice(0, 20);
+  if (!prods.length) { drop.style.display = 'none'; return; }
+  drop.innerHTML = prods.map(p => `
+    <div onclick="selectCatalogForCif('${p.id}')"
+      style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--br)"
+      onmouseenter="this.style.background='var(--s3)'" onmouseleave="this.style.background=''">
+      <div>
+        <div style="font-size:13px;font-weight:700">${p.name}</div>
+        <div style="font-size:11px;color:var(--t2)">${catNames[p.category] || ''}</div>
+      </div>
+      <span style="font-size:12px;font-weight:700;color:var(--ac)">${p.salePrice ? fmt(p.salePrice) : ''}</span>
+    </div>`).join('');
+  drop.style.display = 'block';
+  setTimeout(() => {
+    const close = (e) => {
+      const inp = document.getElementById('cif-catalog-search');
+      if (inp && !inp.contains(e.target) && !drop.contains(e.target)) { drop.style.display = 'none'; document.removeEventListener('click', close); }
+    };
+    document.addEventListener('click', close);
+  }, 0);
+}
+
+function selectCatalogForCif(pid) {
+  const p = DB.catalog.find(x => x.id === pid); if (!p) return;
+  document.getElementById('cif-name').value = p.name;
+  document.getElementById('cif-cat').value = p.category || 'other';
+  document.getElementById('cif-price').value = p.salePrice || '';
+  document.getElementById('cif-catalog-search').value = p.name;
+  document.getElementById('cif-catalog-drop').style.display = 'none';
+}
+
+function onCifNameInput() {
+  // when user types name manually, also search catalog
+  const q = document.getElementById('cif-name').value;
+  const searchEl = document.getElementById('cif-catalog-search');
+  if (searchEl && !searchEl.value) {
+    // sync search field
+    searchEl.value = q;
+    filterCatalogDrop();
+  }
+}
+
+// ===================== ORDER PICKER =====================
+
+function openOrderPicker() {
+  openModal('modal-order-picker');
+  renderOrderPicker();
+}
+
+function renderOrderPicker() {
+  const q = (document.getElementById('ordpick-search')?.value || '').toLowerCase();
+  let custs = DB.customers.filter(c => c.active);
+  if (q) custs = custs.filter(c => c.name.toLowerCase().includes(q) || (c.city || '').toLowerCase().includes(q));
+  const el = document.getElementById('ordpick-list'); if (!el) return;
+  el.innerHTML = custs.length ? custs.map(c => {
+    const pending = (c.orders || []).filter(o => o.status === 'pending').length;
+    const inv = (c.inventory || []).length;
+    return `<div onclick="closeModal('modal-order-picker');openAddCustOrder('${c.id}')"
+      style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--br);border-radius:12px;margin-bottom:8px;cursor:pointer;background:var(--s2)"
+      onmouseenter="this.style.background='var(--s3)'" onmouseleave="this.style.background='var(--s2)'">
+      <div class="av ${avClass(DB.customers.indexOf(c))}" style="width:38px;height:38px;border-radius:11px;font-size:15px;flex-shrink:0">${avLetter(c.name)}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700">${c.name}</div>
+        <div style="font-size:11px;color:var(--t2)">${inv} מוצרים${pending ? ' · ' + pending + ' ממתינות' : ''}</div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>`;
+  }).join('') : '<div style="color:var(--t2);font-size:13px;padding:20px;text-align:center">לא נמצאו לקוחות</div>';
+}
+
+// ===================== INVENTORY PICKER =====================
+
+function openInventoryPicker() {
+  openModal('modal-inv-picker');
+  renderInventoryPicker();
+}
+
+function renderInventoryPicker() {
+  const q = (document.getElementById('invpick-search')?.value || '').toLowerCase();
+  let custs = DB.customers.filter(c => c.active);
+  if (q) custs = custs.filter(c => c.name.toLowerCase().includes(q) || (c.city || '').toLowerCase().includes(q));
+  const el = document.getElementById('invpick-list'); if (!el) return;
+  el.innerHTML = custs.length ? custs.map(c => {
+    const inv = (c.inventory || []).length;
+    const low = (c.inventory || []).filter(i => Number(i.minQty || 0) > 0 && Number(i.qty) <= Number(i.minQty)).length;
+    return `<div onclick="closeModal('modal-inv-picker');openCustDetail('${c.id}');setTimeout(()=>setCustDetailTab('inv'),200)"
+      style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--br);border-radius:12px;margin-bottom:8px;cursor:pointer;background:var(--s2)"
+      onmouseenter="this.style.background='var(--s3)'" onmouseleave="this.style.background='var(--s2)'">
+      <div class="av ${avClass(DB.customers.indexOf(c))}" style="width:38px;height:38px;border-radius:11px;font-size:15px;flex-shrink:0">${avLetter(c.name)}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700">${c.name}</div>
+        <div style="font-size:11px;color:var(--t2)">${inv} מוצרים${low ? ' · <span style="color:var(--rd)">' + low + ' נמוך</span>' : ''}</div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>`;
+  }).join('') : '<div style="color:var(--t2);font-size:13px;padding:20px;text-align:center">לא נמצאו לקוחות</div>';
 }
 
 // ===================== TERMS HELPER =====================

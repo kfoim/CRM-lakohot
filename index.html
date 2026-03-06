@@ -554,6 +554,26 @@ textarea.fi { resize: none; }
   // Expose current user check
   window._fbCurrentUser = function() { return auth.currentUser; };
 
+  // ── AUTO-LOGIN on page reload (if Firebase session still active) ──────
+  onAuthStateChanged(auth, function(user) {
+    if (user) {
+      // If login screen is still showing, auto-login the returning user
+      const ls = document.getElementById('login-screen');
+      if (ls && ls.style.display !== 'none') {
+        ls.style.display = 'none';
+        const tsub = document.getElementById('tsub');
+        if (tsub) tsub.innerHTML = window._DB.customers.length + ' לקוחות · ' + window._DB.equipment.length + ' ציוד <span id="sync-status" style="color:var(--gr);font-weight:700;transition:opacity 1s"></span>';
+        if (window._fbLoad) {
+          window._fbLoad().then(function() {
+            if (window._fbListen) window._fbListen();
+            window.renderAll && window.renderAll();
+            window.checkEndOfMonthReminder && window.checkEndOfMonthReminder();
+          });
+        }
+      }
+    }
+  });
+
 </script>
 
 </head>
@@ -562,7 +582,7 @@ textarea.fi { resize: none; }
 <script>
 // Auto cache-bust — BUILD_TS is stamped at file-generation time
 (function() {
-  const BUILD_TS='202603062100'; // auto-updated every time this file is generated
+  const BUILD_TS='202603062200'; // auto-updated every time this file is generated
   const url = new URL(window.location.href);
   if (url.searchParams.get('v') !== BUILD_TS) {
     url.searchParams.set('v', BUILD_TS);
@@ -1636,6 +1656,7 @@ function renderDashboard() {
   checkVisitAlerts();
   checkCollectionAlerts();
   checkThursdayReminder();
+  updateTopSub();
 }
 
 // ===================== CUSTOMER CARD HTML =====================
@@ -3089,18 +3110,18 @@ function deleteActiveCust() {
 
 // ===================== MULTI-SELECT DEBTS =====================
 function onDebtCheck(cid) {
-  const custDebts = DB.debts.filter(d => d.custId === cid);
-  const checked = custDebts.filter(d => { const el = document.getElementById('chk-' + d.id); return el && el.checked; });
+  const checkableDebts = DB.debts.filter(d => d.custId === cid && !d.closed && !d.isCredit);
+  const checked = checkableDebts.filter(d => { const el = document.getElementById('chk-' + d.id); return el && el.checked; });
   const delBtn = document.getElementById('btn-del-sel-' + cid);
   const selAllBtn = document.getElementById('btn-sel-all-' + cid);
   if (delBtn) { delBtn.style.display = checked.length > 0 ? 'block' : 'none'; delBtn.textContent = '🗑️ מחק ' + checked.length + ' (' + fmt(checked.reduce((s, d) => s + Number(d.amount), 0)) + ')'; }
-  if (selAllBtn) selAllBtn.textContent = (checked.length === custDebts.length ? '☑' : '☐') + ' בחר הכל';
+  if (selAllBtn) selAllBtn.textContent = (checked.length === checkableDebts.length && checkableDebts.length > 0 ? '☑' : '☐') + ' בחר הכל';
 }
 function toggleSelectAllDebts(cid) {
-  const custDebts = DB.debts.filter(d => d.custId === cid);
-  const checked = custDebts.filter(d => { const el = document.getElementById('chk-' + d.id); return el && el.checked; });
-  const allChecked = checked.length === custDebts.length;
-  custDebts.forEach(d => { const el = document.getElementById('chk-' + d.id); if (el) el.checked = !allChecked; });
+  const checkableDebts = DB.debts.filter(d => d.custId === cid && !d.closed && !d.isCredit);
+  const checked = checkableDebts.filter(d => { const el = document.getElementById('chk-' + d.id); return el && el.checked; });
+  const allChecked = checked.length === checkableDebts.length && checkableDebts.length > 0;
+  checkableDebts.forEach(d => { const el = document.getElementById('chk-' + d.id); if (el) el.checked = !allChecked; });
   onDebtCheck(cid);
 }
 function deleteSelectedDebts(cid) {
@@ -3853,7 +3874,6 @@ function doLogin() {
     if (window._fbLoad) {
       window._fbLoad().then(function() {
         if (window._fbListen) window._fbListen();
-        renderAll();
         checkEndOfMonthReminder();
       });
     } else {

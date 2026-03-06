@@ -416,6 +416,7 @@ textarea.fi { resize: none; }
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyANqRfFRSWo4Jc4k3PpPGnjjNByWs_gTZg",
@@ -428,6 +429,7 @@ textarea.fi { resize: none; }
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
 
   // No offline persistence — Firebase only
 
@@ -512,12 +514,46 @@ textarea.fi { resize: none; }
     });
   };
 
-  // Init after page loads
+  // ── Auth functions ──────────────────────────────────────────────────
+  window._fbLogin = async function(email, password) {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged will handle the rest
+    } catch(e) {
+      const code = e.code || '';
+      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        return 'שם משתמש או סיסמה שגויים';
+      } else if (code === 'auth/too-many-requests') {
+        return 'יותר מדי ניסיונות — נסה שוב מאוחר יותר';
+      } else if (code === 'auth/network-request-failed') {
+        return 'אין חיבור לאינטרנט';
+      }
+      return 'שגיאת כניסה: ' + code;
+    }
+    return null;
+  };
+
+  window._fbLogout = async function() {
+    await signOut(auth);
+  };
+
+  // ── Auth state listener ──────────────────────────────────────────────
   window.addEventListener('load', () => {
-    setTimeout(async () => {
-      await window._fbLoad();
-      window._fbListen();
-    }, 500);
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Logged in — load data and show app
+        window._currentUser = user;
+        document.getElementById('login-screen').style.display = 'none';
+        await window._fbLoad();
+        window._fbListen();
+        window.renderAll && window.renderAll();
+      } else {
+        // Logged out — show login screen
+        window._currentUser = null;
+        document.getElementById('login-screen').style.display = 'flex';
+        window.showSyncStatus('');
+      }
+    });
   });
 </script>
 </head>
@@ -543,8 +579,8 @@ textarea.fi { resize: none; }
   <div class="login-sub">מערכת ניהול לקוחות והפצה</div>
   <div class="login-form">
     <div class="login-err" id="login-err">שם משתמש או סיסמא שגויים</div>
-    <div class="fg"><label class="fl">שם משתמש</label><input class="fi" id="login-user" placeholder="tzahi" autocomplete="username" autocapitalize="none"></div>
-    <div class="fg"><label class="fl">סיסמא</label><input class="fi" id="login-pass" type="password" placeholder="••••••" autocomplete="current-password"></div>
+    <div class="fg"><label class="fl">אימייל</label><input class="fi" id="login-user" placeholder="tzahi@crm-manahal.com" autocomplete="username" autocapitalize="none" type="email" dir="ltr"></div>
+    <div class="fg"><label class="fl">סיסמה</label><input class="fi" id="login-pass" type="password" placeholder="••••••" autocomplete="current-password"></div>
     <button class="btnp" style="margin-top:8px" onclick="doLogin()">כניסה למערכת ←</button>
   </div>
 </div>
@@ -3680,22 +3716,31 @@ function toggleTermsOther(prefix) {
 }
 
 // ===================== LOGIN =====================
-const USERS = { tzahi: { pass: 'tzahi12345', name: 'צחי' } };
 function doLogin() {
-  const u = document.getElementById('login-user').value.trim().toLowerCase();
+  const emailOrUser = document.getElementById('login-user').value.trim();
   const p = document.getElementById('login-pass').value;
   const err = document.getElementById('login-err');
-  if (USERS[u] && USERS[u].pass === p) {
-    document.getElementById('login-screen').style.display = 'none';
-    err.classList.remove('show');
-    document.getElementById('tsub').textContent = 'שלום ' + USERS[u].name + ' · ' + DB.customers.length + ' לקוחות';
-    renderAll();
-    loadFromCloud();
-    checkEndOfMonthReminder();
-  } else {
-    err.classList.add('show');
-    document.getElementById('login-pass').value = '';
-  }
+  const btn = document.querySelector('#login-screen .btnp');
+  if (!emailOrUser || !p) { err.textContent = 'נא למלא אימייל וסיסמה'; err.classList.add('show'); return; }
+  // Accept plain username — append domain if needed
+  const email = emailOrUser.includes('@') ? emailOrUser : emailOrUser + '@crm-manahal.com';
+  if (btn) { btn.textContent = '...מתחבר'; btn.disabled = true; }
+  err.classList.remove('show');
+  if (!window._fbLogin) { err.textContent = 'Firebase לא נטען עדיין, נסה שוב'; err.classList.add('show'); if (btn) { btn.textContent = 'כניסה למערכת ←'; btn.disabled = false; } return; }
+  window._fbLogin(email, p).then(errMsg => {
+    if (btn) { btn.textContent = 'כניסה למערכת ←'; btn.disabled = false; }
+    if (errMsg) {
+      err.textContent = errMsg;
+      err.classList.add('show');
+      document.getElementById('login-pass').value = '';
+    }
+    // success handled by onAuthStateChanged
+  });
+}
+
+function doLogout() {
+  if (!confirm('להתנתק מהמערכת?')) return;
+  if (window._fbLogout) window._fbLogout();
 }
 
 function checkEndOfMonthReminder() {

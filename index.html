@@ -376,21 +376,35 @@ textarea.fi { resize: none; }
 
 /* LOGIN */
 #login-screen {
-  position: fixed; inset: 0; background: var(--bg); z-index: 999;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px;
+  position: fixed; inset: 0; background: var(--bg); z-index: 9990;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px 24px;
+}
+#login-screen .login-card {
+  width: 100%; max-width: 360px;
+  background: var(--sf); border: 1px solid var(--br2);
+  border-radius: 24px; padding: 36px 28px 28px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.5);
+  display: flex; flex-direction: column; align-items: center;
 }
 .login-logo {
-  width: 76px; height: 76px; border-radius: 22px;
-  background: linear-gradient(135deg, var(--ac), var(--pu));
+  width: 72px; height: 72px; border-radius: 20px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   display: flex; align-items: center; justify-content: center;
-  font-size: 34px; font-weight: 900; color: #fff; margin-bottom: 28px;
-  box-shadow: 0 12px 40px rgba(59,130,246,.4);
+  font-size: 32px; margin-bottom: 20px;
+  box-shadow: 0 8px 32px rgba(59,130,246,.45);
 }
-.login-title { font-size: 26px; font-weight: 900; margin-bottom: 6px; }
-.login-sub { font-size: 14px; color: var(--t2); margin-bottom: 36px; }
-.login-form { width: 100%; max-width: 340px; }
-.login-err { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); border-radius: 11px; padding: 10px 14px; color: var(--rd); font-size: 13px; font-weight: 700; margin-bottom: 14px; display: none; text-align: center; }
+.login-title { font-size: 22px; font-weight: 900; margin-bottom: 4px; text-align:center; }
+.login-sub { font-size: 13px; color: var(--t2); margin-bottom: 28px; text-align:center; }
+.login-form { width: 100%; }
+.login-err {
+  background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3);
+  border-radius: 10px; padding: 10px 14px; color: var(--rd);
+  font-size: 13px; font-weight: 700; margin-bottom: 14px;
+  display: none; text-align: center;
+}
 .login-err.show { display: block; }
+.login-version { font-size: 10px; color: var(--t2); margin-top: 20px; opacity: .5; }
 
 /* INVENTORY SPECIFIC */
 .inv-card { background: var(--sf); border: 1px solid var(--br); border-radius: var(--r); padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all .15s; }
@@ -558,7 +572,7 @@ textarea.fi { resize: none; }
         if (user.isAnonymous || !isEmail) {
           await signOut(auth);
           if (loadEl) loadEl.style.display = 'none';
-          if (loginScreen) loginScreen.style.display = 'flex';
+          if (loginScreen) { loginScreen.style.display = 'flex'; }
           return;
         }
         // Valid user
@@ -569,7 +583,10 @@ textarea.fi { resize: none; }
       } else {
         window._currentUser = null;
         if (loadEl) loadEl.style.display = 'none';
-        if (loginScreen) loginScreen.style.display = 'flex';
+        if (loginScreen) {
+          loginScreen.style.display = 'flex';
+          loginScreen.style.removeProperty('visibility');
+        }
         window.showSyncStatus && window.showSyncStatus('');
       }
     });
@@ -593,7 +610,7 @@ textarea.fi { resize: none; }
 
 <!-- Firebase loading overlay -->
 
-<div id="fb-loading" style="display:none;position:fixed;inset:0;background:var(--bg, #0d1117);z-index:99999;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+<div id="fb-loading" style="display:none;position:fixed;inset:0;background:var(--bg, #0d1117);z-index:99998;flex-direction:column;align-items:center;justify-content:center;gap:16px">
   <div style="font-size:40px">❄️</div>
   <div style="font-size:16px;font-weight:700;color:#e6edf3">CRM קפואים</div>
   <div style="font-size:13px;color:#8b949e">מתחבר לענן...</div>
@@ -607,15 +624,44 @@ textarea.fi { resize: none; }
 <!-- LOGIN SCREEN -->
 
 <div id="login-screen" style="display:none">
-  <div style="position:absolute;top:40px;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(59,130,246,.15),transparent 70%);pointer-events:none"></div>
-  <div class="login-logo">❄️</div>
-  <div class="login-title">CRM קפואים</div>
-  <div class="login-sub">מערכת ניהול לקוחות והפצה</div>
-  <div class="login-form">
-    <div class="login-err" id="login-err">שם משתמש או סיסמא שגויים</div>
-    <div class="fg"><label class="fl">אימייל</label><input class="fi" id="login-user" placeholder="tzahi@crm-manahal.com" autocomplete="username" autocapitalize="none" type="email" dir="ltr"></div>
-    <div class="fg"><label class="fl">סיסמה</label><input class="fi" id="login-pass" type="password" placeholder="••••••" autocomplete="current-password"></div>
-    <button class="btnp" style="margin-top:8px" onclick="doLogin()">כניסה למערכת ←</button>
+  <!-- background glow -->
+  <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 50% 30%,rgba(59,130,246,.12),transparent 65%);pointer-events:none"></div>
+
+  <div class="login-card">
+    <div class="login-logo">❄️</div>
+    <div class="login-title">CRM קפואים</div>
+    <div class="login-sub">מערכת ניהול הפצה</div>
+
+```
+<div class="login-form">
+  <div class="login-err" id="login-err"></div>
+
+  <div class="fg" style="margin-bottom:12px">
+    <label class="fl" style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px;display:block">אימייל</label>
+    <input class="fi" id="login-user"
+      type="email" dir="ltr"
+      placeholder="tzahi@crm-manahal.com"
+      autocomplete="username" autocapitalize="none"
+      style="font-size:15px;padding:13px 14px;border-radius:12px">
+  </div>
+
+  <div class="fg" style="margin-bottom:20px">
+    <label class="fl" style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px;display:block">סיסמה</label>
+    <input class="fi" id="login-pass"
+      type="password" placeholder="••••••"
+      autocomplete="current-password"
+      style="font-size:15px;padding:13px 14px;border-radius:12px;letter-spacing:3px">
+  </div>
+
+  <button class="btnp" id="login-btn" onclick="doLogin()"
+    style="width:100%;padding:14px;font-size:15px;font-weight:800;border-radius:14px;letter-spacing:.3px">
+    כניסה למערכת
+  </button>
+</div>
+
+<div class="login-version">🔒 מאובטח · Firebase Auth</div>
+```
+
   </div>
 </div>
 
@@ -3795,7 +3841,7 @@ function doLogin() {
   const emailOrUser = document.getElementById('login-user').value.trim();
   const p = document.getElementById('login-pass').value;
   const err = document.getElementById('login-err');
-  const btn = document.querySelector('#login-screen .btnp');
+  const btn = document.getElementById('login-btn');
   if (!emailOrUser || !p) { err.textContent = 'נא למלא אימייל וסיסמה'; err.classList.add('show'); return; }
   // Accept plain username — append domain if needed
   const email = emailOrUser.includes('@') ? emailOrUser : emailOrUser + '@crm-manahal.com';

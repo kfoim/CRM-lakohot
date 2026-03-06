@@ -438,49 +438,74 @@ textarea.fi { resize: none; }
   const DOC_ID = 'crm_data';
   const COL = 'crm';
   let _saveTimer = null;
-  let _lastSaveHash = '';
+  let _lastSavedJson = '';   // FIX: full JSON hash instead of weak length hash
   let _unsubscribe = null;
   let _isSaving = false;
+  let _saveRetryCount = 0;
 
-  // Expose functions to global scope
+  function _makeHash(data) {
+    // FIX: use actual JSON string for comparison — no false collisions
+    const j = JSON.stringify(data);
+    _makeHash._cache = j;
+    return j;
+  }
+
   window._fbSave = async function(data) {
-    if (_isSaving) return;
-    const hash = JSON.stringify(data).length + '_' + (data.customers || []).length;
-    if (hash === _lastSaveHash) return;
-    _lastSaveHash = hash;
+    // FIX: don't block if previous save is stuck — use timeout safety
+    if (_isSaving) {
+      // Queue another attempt after delay
+      clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(() => window._fbSave(data), 1500);
+      return;
+    }
+    const json = _makeHash(data);
+    if (json === _lastSavedJson) return; // truly identical, skip
     _isSaving = true;
     try {
-      await setDoc(doc(db, COL, DOC_ID), { data: JSON.stringify(data), updated: Date.now() });
+      await setDoc(doc(db, COL, DOC_ID), { data: json, updated: Date.now() });
+      _lastSavedJson = json;  // FIX: only update hash AFTER successful save
+      _saveRetryCount = 0;
       window.showSyncStatus('☁️ נשמר');
     } catch(e) {
       console.error('Firebase save error:', e);
-      window.showSyncStatus('⚠️ שגיאת שמירה');
+      _saveRetryCount++;
+      window.showSyncStatus('⚠️ שגיאת שמירה — מנסה שוב');
+      // FIX: retry up to 3 times with backoff
+      if (_saveRetryCount <= 3) {
+        setTimeout(() => window._fbSave(data), 2000 * _saveRetryCount);
+      } else {
+        _saveRetryCount = 0;
+        window.showSyncStatus('⚠️ שמירה נכשלה — בדוק חיבור');
+      }
+    } finally {
+      _isSaving = false;  // FIX: always release lock
     }
-    _isSaving = false;
   };
 
   window._fbScheduleSave = function(data) {
     clearTimeout(_saveTimer);
     window.showSyncStatus('...');
-    _saveTimer = setTimeout(() => window._fbSave(data), 1200);
+    _saveTimer = setTimeout(() => window._fbSave(data), 800); // slightly faster
   };
 
   window._fbLoad = async function() {
-    // Show loading overlay
     const loadingEl = document.getElementById('fb-loading');
     if (loadingEl) loadingEl.style.display = 'flex';
     try {
       window.showSyncStatus('🔄 טוען...');
       const snap = await getDoc(doc(db, COL, DOC_ID));
       if (snap.exists()) {
-        const parsed = JSON.parse(snap.data().data);
+        const json = snap.data().data;
+        const parsed = JSON.parse(json);
         window.DB = { customers: [], equipment: [], payments: [], debts: [], visits: [], catalog: [], ...parsed };
         if (!window.DB.catalog) window.DB.catalog = [];
         window.DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
+        _lastSavedJson = json;  // FIX: seed hash from loaded data so first save isn't skipped
         window.renderAll && window.renderAll();
-        window.showSyncStatus('✅ מסונכרן');
+        window.showSyncStatus('✅ מסונכרן (' + (window.DB.customers || []).length + ' לקוחות)');
       } else {
-        // First run — empty DB, save blank to Firebase
+        // First run — push empty DB
+        _lastSavedJson = '';
         await window._fbSave(window.DB);
         window.renderAll && window.renderAll();
         window.showSyncStatus('☁️ מוכן');
@@ -499,19 +524,22 @@ textarea.fi { resize: none; }
   window._fbListen = function() {
     if (_unsubscribe) _unsubscribe();
     _unsubscribe = onSnapshot(doc(db, COL, DOC_ID), (snap) => {
-      if (!snap.exists() || _isSaving) return;
+      if (!snap.exists()) return;
+      if (_isSaving) return; // we're mid-save, ignore echo
       try {
-        const remote = JSON.parse(snap.data().data);
-        const remoteHash = JSON.stringify(remote).length + '_' + (remote.customers || []).length;
-        if (remoteHash === _lastSaveHash) return;
+        const remoteJson = snap.data().data;
+        if (remoteJson === _lastSavedJson) return; // our own save echoed back, ignore
+        const remote = JSON.parse(remoteJson);
         window.DB = { customers: [], equipment: [], payments: [], debts: [], visits: [], catalog: [], ...remote };
         if (!window.DB.catalog) window.DB.catalog = [];
         window.DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
+        _lastSavedJson = remoteJson; // update so we don't re-apply this
         window.renderAll && window.renderAll();
-        window.showSyncStatus('🔄 עודכן');
+        window.showSyncStatus('🔄 עודכן ממכשיר אחר');
         setTimeout(() => window.showSyncStatus('✅ מסונכרן'), 2000);
-      } catch(e) {}
+      } catch(e) { console.error('listener parse error', e); }
     }, (err) => {
+      console.error('Firebase listener error:', err);
       window.showSyncStatus('⚠️ בעיית חיבור');
     });
   };

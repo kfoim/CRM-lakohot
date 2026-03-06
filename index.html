@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -413,6 +414,7 @@ textarea.fi { resize: none; }
 </style>
 
 <!-- Firebase SDK -->
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -541,7 +543,18 @@ textarea.fi { resize: none; }
   window.addEventListener('load', () => {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Logged in — load data and show app
+        // Block anonymous logins and non-email providers
+        const isEmailProvider = user.providerData && user.providerData.some(p => p.providerId === 'password');
+        if (user.isAnonymous || !isEmailProvider) {
+          await signOut(auth);
+          window._currentUser = null;
+          document.getElementById('login-screen').style.display = 'flex';
+          window.showSyncStatus('');
+          const err = document.getElementById('login-err');
+          if (err) { err.textContent = 'כניסה עם אימייל וסיסמה בלבד'; err.classList.add('show'); }
+          return;
+        }
+        // Valid email/password login — load data and show app
         window._currentUser = user;
         document.getElementById('login-screen').style.display = 'none';
         await window._fbLoad();
@@ -556,10 +569,12 @@ textarea.fi { resize: none; }
     });
   });
 </script>
+
 </head>
 <body>
 
 <!-- Firebase loading overlay -->
+
 <div id="fb-loading" style="display:none;position:fixed;inset:0;background:var(--bg, #0d1117);z-index:99999;flex-direction:column;align-items:center;justify-content:center;gap:16px">
   <div style="font-size:40px">❄️</div>
   <div style="font-size:16px;font-weight:700;color:#e6edf3">CRM קפואים</div>
@@ -572,6 +587,7 @@ textarea.fi { resize: none; }
 <style>@keyframes loadbar { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }</style>
 
 <!-- LOGIN SCREEN -->
+
 <div id="login-screen">
   <div style="position:absolute;top:40px;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(59,130,246,.15),transparent 70%);pointer-events:none"></div>
   <div class="login-logo">❄️</div>
@@ -586,6 +602,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- TOPBAR -->
+
 <div class="topbar">
   <div class="tl">
     <div class="logo">❄️</div>
@@ -604,6 +621,7 @@ textarea.fi { resize: none; }
 <!-- ===================== PAGES ===================== -->
 
 <!-- DASHBOARD -->
+
 <div class="page active" id="pg-dash">
   <div id="visit-alerts-banner" class="alert-banner" style="display:none;background:linear-gradient(135deg,#1a4a8f,#2563eb)"></div>
   <div id="alerts-banner" class="alert-banner" style="display:none;background:linear-gradient(135deg,#8f1818,#c0392b)"></div>
@@ -620,6 +638,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- CUSTOMERS -->
+
 <div class="page" id="pg-cust">
   <div class="sbar">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -639,6 +658,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- EQUIPMENT -->
+
 <div class="page" id="pg-eq">
   <div class="sbar">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -654,6 +674,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- DEBT -->
+
 <div class="page" id="pg-debt">
   <div class="sgrid">
     <div class="sbox r"><div class="sv r" id="d-total">₪0</div><div class="sl">סה"כ חובות</div></div>
@@ -676,6 +697,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- INVENTORY -->
+
 <div class="page" id="pg-inv">
   <div class="sgrid">
     <div class="sbox r"><div class="sv r" id="inv-low">0</div><div class="sl">מלאי נמוך</div></div>
@@ -699,6 +721,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- ORDERS -->
+
 <div class="page" id="pg-orders">
   <div class="sgrid">
     <div class="sbox p"><div class="sv p" id="ord-pending">0</div><div class="sl">ממתינות</div></div>
@@ -718,6 +741,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- HISTORY -->
+
 <div class="page" id="pg-hist">
   <div class="sgrid" id="hist-stats"></div>
   <div class="sbar">
@@ -736,6 +760,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- MONTHLY COLLECTION -->
+
 <div class="page" id="pg-monthly">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
     <span style="font-size:14px;font-weight:800">לוח גבייה לפי שוטף</span>
@@ -745,6 +770,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- BOTTOM NAV -->
+
 <nav class="bnav">
   <div class="ni active" onclick="goPage('dash',this)" id="ni-dash">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -780,11 +806,13 @@ textarea.fi { resize: none; }
 </nav>
 
 <button class="fab" id="fab-btn" onclick="openAddModal()">+</button>
+
 <div class="toast" id="toast"></div>
 
 <!-- ===================== MODALS ===================== -->
 
 <!-- ADD CUSTOMER -->
+
 <div class="overlay" id="modal-add-cust">
   <div class="sheet">
     <div class="shandle"></div>
@@ -845,6 +873,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- EDIT CUSTOMER -->
+
 <div class="overlay layer2" id="modal-edit-cust">
   <div class="sheet">
     <div class="shandle"></div>
@@ -905,6 +934,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- ADD EQUIPMENT -->
+
 <div class="overlay layer2" id="modal-add-eq">
   <div class="sheet">
     <div class="shandle"></div>
@@ -944,6 +974,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- CUSTOMER INVENTORY ITEM DETAIL -->
+
 <div class="overlay layer2" id="modal-cust-inv-item">
   <div class="sheet">
     <div class="shandle"></div>
@@ -953,6 +984,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- CUSTOMER INVENTORY FORM (add/edit) -->
+
 <div class="overlay layer2" id="modal-cust-inv-form">
   <div class="sheet">
     <div class="shandle"></div>
@@ -991,6 +1023,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- CUSTOMER ORDER FORM -->
+
 <div class="overlay layer2" id="modal-cust-order">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1021,6 +1054,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- ORDER DETAIL -->
+
 <div class="overlay layer2" id="modal-ord-detail">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1030,6 +1064,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- PAYMENT -->
+
 <div class="overlay layer2" id="modal-payment">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1075,6 +1110,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- ADD DEBT -->
+
 <div class="overlay layer2" id="modal-add-debt">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1095,6 +1131,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- CUSTOMER DETAIL -->
+
 <div class="overlay" id="modal-cust-detail">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1161,6 +1198,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- ORDER PICKER -->
+
 <div class="overlay" id="modal-order-picker">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1177,6 +1215,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- INVENTORY PICKER (add/update stock for a customer) -->
+
 <div class="overlay" id="modal-inv-picker">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1193,6 +1232,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- CATALOG MODAL -->
+
 <div class="overlay" id="modal-catalog">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1211,6 +1251,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- ADD/EDIT CATALOG PRODUCT -->
+
 <div class="overlay layer2" id="modal-catalog-prod">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1233,6 +1274,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- EQUIPMENT DETAIL -->
+
 <div class="overlay" id="modal-eq-detail">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1245,6 +1287,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- VISIT MODAL -->
+
 <div class="overlay layer2" id="modal-visit">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1268,6 +1311,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- CUSTOMER HISTORY MODAL -->
+
 <div class="overlay layer2" id="modal-cust-hist">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1277,6 +1321,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- ADD PICKER -->
+
 <div class="overlay" id="modal-picker">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1295,62 +1340,67 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- EXPORT MODAL -->
+
 <div class="overlay" id="modal-export">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shead"><span class="stitle">📤 יצוא / יבוא</span><button class="xbtn" onclick="closeModal('modal-export')">✕</button></div>
     <div class="sbody">
 
-      <!-- FULL BACKUP -->
-      <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:14px;padding:14px;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:800;color:var(--ac);margin-bottom:10px">💾 גיבוי מלא (JSON)</div>
-        <button class="export-btn green" style="margin-top:0" onclick="exportFullBackup()">📥 הורד גיבוי מלא</button>
-        <div style="margin-top:8px">
-          <label style="display:block;font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:700">📤 שחזר מגיבוי</label>
-          <div style="position:relative;border:2px dashed var(--br2);border-radius:10px;padding:12px;text-align:center;cursor:pointer" onclick="document.getElementById('import-json-file').click()">
-            <div style="font-size:12px;color:var(--t2)" id="import-json-label">לחץ לבחירת קובץ JSON...</div>
-            <input type="file" id="import-json-file" accept=".json" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="importFromJSON(this)">
-          </div>
-        </div>
+```
+  <!-- FULL BACKUP -->
+  <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:14px;padding:14px;margin-bottom:12px">
+    <div style="font-size:12px;font-weight:800;color:var(--ac);margin-bottom:10px">💾 גיבוי מלא (JSON)</div>
+    <button class="export-btn green" style="margin-top:0" onclick="exportFullBackup()">📥 הורד גיבוי מלא</button>
+    <div style="margin-top:8px">
+      <label style="display:block;font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:700">📤 שחזר מגיבוי</label>
+      <div style="position:relative;border:2px dashed var(--br2);border-radius:10px;padding:12px;text-align:center;cursor:pointer" onclick="document.getElementById('import-json-file').click()">
+        <div style="font-size:12px;color:var(--t2)" id="import-json-label">לחץ לבחירת קובץ JSON...</div>
+        <input type="file" id="import-json-file" accept=".json" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="importFromJSON(this)">
       </div>
-
-      <!-- CSV EXPORT -->
-      <div style="background:var(--s2);border:1px solid var(--br);border-radius:14px;padding:14px;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:800;color:var(--t2);margin-bottom:10px">📊 יצוא CSV לאקסל</div>
-        <button class="export-btn green" style="margin-top:0" onclick="exportCSV('customers')">👤 לקוחות</button>
-        <button class="export-btn green" onclick="exportCSV('debts')">📋 חובות</button>
-        <button class="export-btn green" onclick="exportCSV('payments')">💰 תשלומים</button>
-        <button class="export-btn green" onclick="exportCSV('inventory')">📦 מלאי</button>
-        <button class="export-btn green" onclick="exportCSV('equipment')">🧊 ציוד</button>
-      </div>
-
-      <!-- CSV IMPORT -->
-      <div style="background:var(--s2);border:1px solid var(--br);border-radius:14px;padding:14px">
-        <div style="font-size:12px;font-weight:800;color:var(--t2);margin-bottom:10px">📥 יבוא מ-CSV</div>
-        <div class="fg" style="margin-bottom:8px">
-          <label class="fl">סוג ייבוא</label>
-          <select class="fi" id="import-csv-type" style="font-size:13px">
-            <option value="customers">👤 לקוחות</option>
-            <option value="debts">📋 חובות</option>
-            <option value="payments">💰 תשלומים</option>
-            <option value="inventory">📦 מלאי</option>
-          </select>
-        </div>
-        <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px;margin-bottom:8px;font-size:11px;color:var(--yw);line-height:1.6">
-          ⚠️ הקובץ חייב להיות בדיוק באותו פורמט של היצוא. רשומות קיימות עם אותו מזהה יוחלפו.
-        </div>
-        <div style="position:relative;border:2px dashed var(--br2);border-radius:10px;padding:12px;text-align:center;cursor:pointer" onclick="document.getElementById('import-csv-file').click()">
-          <div style="font-size:12px;color:var(--t2)" id="import-csv-label">לחץ לבחירת קובץ CSV...</div>
-          <input type="file" id="import-csv-file" accept=".csv" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="importFromCSV(this)">
-        </div>
-        <div id="import-result" style="display:none;margin-top:10px;font-size:12px;font-weight:700;text-align:center;padding:8px;border-radius:8px"></div>
-      </div>
-
     </div>
+  </div>
+
+  <!-- CSV EXPORT -->
+  <div style="background:var(--s2);border:1px solid var(--br);border-radius:14px;padding:14px;margin-bottom:12px">
+    <div style="font-size:12px;font-weight:800;color:var(--t2);margin-bottom:10px">📊 יצוא CSV לאקסל</div>
+    <button class="export-btn green" style="margin-top:0" onclick="exportCSV('customers')">👤 לקוחות</button>
+    <button class="export-btn green" onclick="exportCSV('debts')">📋 חובות</button>
+    <button class="export-btn green" onclick="exportCSV('payments')">💰 תשלומים</button>
+    <button class="export-btn green" onclick="exportCSV('inventory')">📦 מלאי</button>
+    <button class="export-btn green" onclick="exportCSV('equipment')">🧊 ציוד</button>
+  </div>
+
+  <!-- CSV IMPORT -->
+  <div style="background:var(--s2);border:1px solid var(--br);border-radius:14px;padding:14px">
+    <div style="font-size:12px;font-weight:800;color:var(--t2);margin-bottom:10px">📥 יבוא מ-CSV</div>
+    <div class="fg" style="margin-bottom:8px">
+      <label class="fl">סוג ייבוא</label>
+      <select class="fi" id="import-csv-type" style="font-size:13px">
+        <option value="customers">👤 לקוחות</option>
+        <option value="debts">📋 חובות</option>
+        <option value="payments">💰 תשלומים</option>
+        <option value="inventory">📦 מלאי</option>
+      </select>
+    </div>
+    <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px;margin-bottom:8px;font-size:11px;color:var(--yw);line-height:1.6">
+      ⚠️ הקובץ חייב להיות בדיוק באותו פורמט של היצוא. רשומות קיימות עם אותו מזהה יוחלפו.
+    </div>
+    <div style="position:relative;border:2px dashed var(--br2);border-radius:10px;padding:12px;text-align:center;cursor:pointer" onclick="document.getElementById('import-csv-file').click()">
+      <div style="font-size:12px;color:var(--t2)" id="import-csv-label">לחץ לבחירת קובץ CSV...</div>
+      <input type="file" id="import-csv-file" accept=".csv" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="importFromCSV(this)">
+    </div>
+    <div id="import-result" style="display:none;margin-top:10px;font-size:12px;font-weight:700;text-align:center;padding:8px;border-radius:8px"></div>
+  </div>
+
+</div>
+```
+
   </div>
 </div>
 
 <!-- REPORT MODAL -->
+
 <div class="overlay" id="modal-report">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1360,6 +1410,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- ENVELOPE MODAL -->
+
 <div class="overlay" id="modal-envelope">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1377,6 +1428,7 @@ textarea.fi { resize: none; }
 </div>
 
 <!-- PHOTO FULLSCREEN -->
+
 <div class="photo-fullscreen" id="photo-fullscreen" style="display:none" onclick="closeFullscreen()">
   <button class="photo-fullscreen-close" onclick="closeFullscreen()">✕</button>
   <img id="photo-fullscreen-img" src="">
@@ -3784,5 +3836,6 @@ function renderAll() {
 
 document.getElementById('fab-btn').style.display = 'none';
 </script>
+
 </body>
 </html>

@@ -3,6 +3,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
+  <meta name="app-version" content="202603061610">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -418,7 +419,7 @@ textarea.fi { resize: none; }
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyANqRfFRSWo4Jc4k3PpPGnjjNByWs_gTZg",
@@ -433,7 +434,8 @@ textarea.fi { resize: none; }
   const db = getFirestore(app);
   const auth = getAuth(app);
 
-  // No offline persistence — Firebase only
+  // SESSION persistence — requires login every time browser/tab is closed
+  await setPersistence(auth, browserSessionPersistence).catch(() => {});
 
   const DOC_ID = 'crm_data';
   const COL = 'crm';
@@ -451,34 +453,36 @@ textarea.fi { resize: none; }
   }
 
   window._fbSave = async function(data) {
-    // FIX: don't block if previous save is stuck — use timeout safety
+    // Must be authenticated
+    if (!auth.currentUser) {
+      window.showSyncStatus('⚠️ לא מחובר');
+      return;
+    }
     if (_isSaving) {
-      // Queue another attempt after delay
       clearTimeout(_saveTimer);
       _saveTimer = setTimeout(() => window._fbSave(data), 1500);
       return;
     }
     const json = _makeHash(data);
-    if (json === _lastSavedJson) return; // truly identical, skip
+    if (json === _lastSavedJson) return;
     _isSaving = true;
     try {
       await setDoc(doc(db, COL, DOC_ID), { data: json, updated: Date.now() });
-      _lastSavedJson = json;  // FIX: only update hash AFTER successful save
+      _lastSavedJson = json;
       _saveRetryCount = 0;
       window.showSyncStatus('☁️ נשמר');
     } catch(e) {
-      console.error('Firebase save error:', e);
+      console.error('Firebase save error:', e.code, e.message);
       _saveRetryCount++;
-      window.showSyncStatus('⚠️ שגיאת שמירה — מנסה שוב');
-      // FIX: retry up to 3 times with backoff
-      if (_saveRetryCount <= 3) {
-        setTimeout(() => window._fbSave(data), 2000 * _saveRetryCount);
+      if (e.code === 'permission-denied') {
+        window.showSyncStatus('⚠️ אין הרשאה — בדוק Rules');
       } else {
-        _saveRetryCount = 0;
-        window.showSyncStatus('⚠️ שמירה נכשלה — בדוק חיבור');
+        window.showSyncStatus('⚠️ שגיאת שמירה');
+        if (_saveRetryCount <= 3) setTimeout(() => window._fbSave(data), 2000 * _saveRetryCount);
+        else { _saveRetryCount = 0; window.showSyncStatus('⚠️ שמירה נכשלה'); }
       }
     } finally {
-      _isSaving = false;  // FIX: always release lock
+      _isSaving = false;
     }
   };
 
@@ -489,6 +493,7 @@ textarea.fi { resize: none; }
   };
 
   window._fbLoad = async function() {
+    if (!auth.currentUser) { window.showSyncStatus('⚠️ לא מחובר'); return; }
     const loadingEl = document.getElementById('fb-loading');
     if (loadingEl) loadingEl.style.display = 'flex';
     try {
@@ -600,6 +605,18 @@ textarea.fi { resize: none; }
 
 </head>
 <body>
+
+<script>
+// Auto cache-bust — BUILD_TS is stamped at file-generation time
+(function() {
+  const BUILD_TS = '202603061610'; // auto-updated every time this file is generated
+  const url = new URL(window.location.href);
+  if (url.searchParams.get('v') !== BUILD_TS) {
+    url.searchParams.set('v', BUILD_TS);
+    window.location.replace(url.toString());
+  }
+})();
+</script>
 
 <!-- Firebase loading overlay -->
 

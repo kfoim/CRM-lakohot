@@ -3,7 +3,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-  <meta name="app-version" content="202603061800">
+  <meta name="app-version" content="202603061855">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -563,7 +563,9 @@ textarea.fi { resize: none; }
   function _showLogin() {
     const loadEl = document.getElementById('fb-loading');
     const loginScreen = document.getElementById('login-screen');
+    const appWrap = document.getElementById('app-wrap');
     if (loadEl) loadEl.style.display = 'none';
+    if (appWrap) appWrap.style.display = 'none';
     if (loginScreen) loginScreen.style.display = 'flex';
     window._currentUser = null;
     window.showSyncStatus && window.showSyncStatus('');
@@ -571,7 +573,9 @@ textarea.fi { resize: none; }
 
   function _showApp(user) {
     const loginScreen = document.getElementById('login-screen');
+    const appWrap = document.getElementById('app-wrap');
     if (loginScreen) loginScreen.style.display = 'none';
+    if (appWrap) appWrap.style.display = 'block';
     window._currentUser = user;
   }
 
@@ -609,7 +613,7 @@ textarea.fi { resize: none; }
 <script>
 // Auto cache-bust — BUILD_TS is stamped at file-generation time
 (function() {
-  const BUILD_TS = '202603061800'; // auto-updated every time this file is generated
+  const BUILD_TS = '202603061855'; // auto-updated every time this file is generated
   const url = new URL(window.location.href);
   if (url.searchParams.get('v') !== BUILD_TS) {
     url.searchParams.set('v', BUILD_TS);
@@ -674,6 +678,10 @@ textarea.fi { resize: none; }
 
   </div>
 </div>
+
+<!-- APP WRAPPER - hidden until authenticated -->
+
+<div id="app-wrap" style="display:none">
 
 <!-- TOPBAR -->
 
@@ -1585,8 +1593,8 @@ function eqDebt(cid) { return DB.equipment.filter(e => e.custId === cid).reduce(
 function totalDebt(cid) { return custDebt(cid) + eqDebt(cid); }
 
 // ===================== NAVIGATION =====================
-let curPage = 'dash', activeCid = null, activeEid = null, activeInvId = null, activeOrdId = null;
-let curTab = { cust: 'all', eq: 'all', debt: 'all', inv: 'all', ord: 'all' };
+var curPage = 'dash', activeCid = null, activeEid = null, activeInvId = null, activeOrdId = null;
+var curTab = { cust: 'all', eq: 'all', debt: 'all', inv: 'all', ord: 'all' };
 
 function goPage(name, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1636,7 +1644,7 @@ function setEqTab(el, f) { document.querySelectorAll('#pg-eq .tab').forEach(t =>
 function setDebtTab(el, f) { document.querySelectorAll('#pg-debt .tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); curTab.debt = f; renderDebts(); }
 function setInvTab(el, f) { document.querySelectorAll('#pg-inv .tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); curTab.inv = f; renderInventory(); }
 function setOrdTab(el, f) { document.querySelectorAll('#pg-orders .tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); curTab.ord = f; renderOrders(); }
-let histTab = 'all';
+var histTab = 'all';
 function setHistTab(el, f) { document.querySelectorAll('#pg-hist .tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); histTab = f; renderHistory(); }
 
 // ===================== DASHBOARD =====================
@@ -2055,7 +2063,7 @@ function ordCardHtml(o) {
   </div>`;
 }
 
-let activeOrderCid = null, activeOrderItems = [];
+var activeOrderCid = null, activeOrderItems = [];
 
 function openAddCustOrder(cid) {
   activeOrderCid = cid;
@@ -3915,6 +3923,8 @@ function renderAll() {
 
 document.getElementById('fab-btn').style.display = 'none';
 </script>
+
+</div><!-- /app-wrap -->
 
 </body>
 </html>

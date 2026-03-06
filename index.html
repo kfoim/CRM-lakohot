@@ -495,7 +495,7 @@ textarea.fi { resize: none; }
         const parsed = JSON.parse(json);
         window.DB = Object.assign({ customers:[], equipment:[], payments:[], debts:[], visits:[], catalog:[] }, parsed);
         if (!window._DB.catalog) window._DB.catalog = [];
-        window._DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
+        window._DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; if (c.active === undefined || c.active === null) c.active = true; });
         _lastJson = json;
         window.showSyncStatus && window.showSyncStatus('✅ מסונכרן (' + window._DB.customers.length + ' לקוחות)');
       } else {
@@ -519,7 +519,7 @@ textarea.fi { resize: none; }
         const remote = JSON.parse(json);
         window.DB = Object.assign({ customers:[], equipment:[], payments:[], debts:[], visits:[], catalog:[] }, remote);
         if (!window._DB.catalog) window._DB.catalog = [];
-        window._DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
+        window._DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; if (c.active === undefined || c.active === null) c.active = true; });
         _lastJson = json;
         window.renderAll && window.renderAll();
         window.showSyncStatus && window.showSyncStatus('🔄 עודכן ממכשיר אחר');
@@ -1502,7 +1502,7 @@ function showSyncStatus(msg) {
 
 function updateTopSub() {
   const el = document.getElementById('tsub');
-  if (el) el.innerHTML = DB.customers.length + ' לקוחות · ' + DB.equipment.length + ' ציוד <span id="sync-status" style="color:var(--gr);font-weight:700;transition:opacity 1s"></span>';
+  if (el) el.innerHTML = (DB.customers || []).length + ' לקוחות · ' + (DB.equipment || []).length + ' ציוד <span id="sync-status" style="color:var(--gr);font-weight:700;transition:opacity 1s"></span>';
 }
 
 // ===================== DATA =====================
@@ -1744,13 +1744,13 @@ function renderDebts() {
     return { c, debt, days };
   }).filter(x => x.debt > 0);
   if (q) list = list.filter(x => x.c.name.toLowerCase().includes(q) || (x.c.contact || '').toLowerCase().includes(q));
+  const td = list.reduce((s, x) => s + x.debt, 0);
+  document.getElementById('d-total').textContent = fmt(td);
+  document.getElementById('d-count').textContent = list.length;
   if (curTab.debt === 'new') list = list.filter(x => x.days <= 30);
   if (curTab.debt === 'old') list = list.filter(x => x.days > 30 && x.days <= 60);
   if (curTab.debt === 'urgent') list = list.filter(x => x.days > 60);
   list.sort((a, b) => b.debt - a.debt);
-  const td = list.reduce((s, x) => s + x.debt, 0);
-  document.getElementById('d-total').textContent = fmt(td);
-  document.getElementById('d-count').textContent = list.length;
   document.getElementById('debt-list').innerHTML = list.length
     ? list.map(({ c, debt, days }) => {
       const ac = days <= 30 ? 'age-ok' : days <= 60 ? 'age-warn' : 'age-bad';
@@ -1804,7 +1804,7 @@ function renderInventory() {
   DB.customers.forEach(c => {
     (c.inventory || []).forEach(i => {
       totalProds++;
-      if (Number(i.qty) <= Number(i.minQty || 0)) lowCount++;
+      if (Number(i.minQty || 0) > 0 && Number(i.qty) <= Number(i.minQty)) lowCount++;
     });
   });
   document.getElementById('inv-low').textContent = lowCount;
@@ -2000,11 +2000,10 @@ function renderOrders() {
     (c.orders || []).forEach(o => list.push({ ...o, custName: c.name, custId: c.id }));
   });
   list.sort((a, b) => b.created > a.created ? 1 : -1);
-  if (curTab.ord === 'pending') list = list.filter(o => o.status === 'pending');
-  if (curTab.ord === 'delivered') list = list.filter(o => o.status === 'delivered');
-
   const pending = list.filter(o => o.status === 'pending').length;
   const todayOrds = list.filter(o => o.deliverDate === today() || o.created === today()).length;
+  if (curTab.ord === 'pending') list = list.filter(o => o.status === 'pending');
+  if (curTab.ord === 'delivered') list = list.filter(o => o.status === 'delivered');
   document.getElementById('ord-pending').textContent = pending;
   document.getElementById('ord-today').textContent = todayOrds;
 
@@ -2741,9 +2740,11 @@ function openDebtModal(cid) {
 }
 
 function openAddDebtGeneral() {
+  const activeCustomers = DB.customers.filter(c => c.active);
+  if (!activeCustomers.length) { alert('אין לקוחות פעילים. הוסף לקוח תחילה.'); return; }
   const wrap = document.getElementById('ad-cust-wrap');
-  wrap.innerHTML = `<label class="fl">לקוח *</label><select class="fi" id="ad-cust-sel">${DB.customers.filter(c => c.active).map(c => `<option value="${c.id}">${c.name}</option>`).join('')}</select>`;
-  activeCid = DB.customers.find(c => c.active)?.id || null;
+  wrap.innerHTML = `<label class="fl">לקוח *</label><select class="fi" id="ad-cust-sel">${activeCustomers.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}</select>`;
+  activeCid = activeCustomers[0].id;
   document.getElementById('ad-date').value = today();
   document.getElementById('ad-amount').value = '';
   document.getElementById('ad-desc').value = '';
@@ -2759,10 +2760,9 @@ function saveDebt() {
   const sel = document.getElementById('ad-cust-sel');
   const cid = sel ? sel.value : activeCid;
   DB.debts.push({ id: uid(), custId: cid, amount: amt, docnum: docnum.trim(), date: document.getElementById('ad-date').value, desc: document.getElementById('ad-desc').value });
-  const _dcid = activeCid;
   save(); renderAll(); closeModal('modal-add-debt');
   showToast('חוב נוסף ✅');
-  if (_dcid && document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailDebts(_dcid); setCustDetailTab('debts'); }
+  if (cid && document.getElementById('modal-cust-detail').classList.contains('open')) { renderCustDetailDebts(cid); setCustDetailTab('debts'); }
 }
 
 // ===================== SAVE CUSTOMER =====================
@@ -3868,17 +3868,20 @@ function doLogin() {
       document.getElementById('login-pass').value = '';
       return;
     }
-    // Success — hide login, then load data, THEN render
+    // Success — onAuthStateChanged fires first and handles login screen + data load.
+    // Only load manually if screen wasn't already handled (fallback for timing edge cases).
     err.classList.remove('show');
-    document.getElementById('login-screen').style.display = 'none';
-    if (window._fbLoad) {
-      window._fbLoad().then(function() {
-        if (window._fbListen) window._fbListen();
+    if (document.getElementById('login-screen').style.display !== 'none') {
+      document.getElementById('login-screen').style.display = 'none';
+      if (window._fbLoad) {
+        window._fbLoad().then(function() {
+          if (window._fbListen) window._fbListen();
+          checkEndOfMonthReminder();
+        });
+      } else {
+        renderAll();
         checkEndOfMonthReminder();
-      });
-    } else {
-      renderAll();
-      checkEndOfMonthReminder();
+      }
     }
   });
 }

@@ -2488,17 +2488,6 @@ function collectEq(eid) { if (!confirm('לאסוף ציוד זה?')) return; DB.
 function delEq(eid) { if (!confirm('למחוק ציוד זה?')) return; DB.equipment = DB.equipment.filter(e => e.id !== eid); save(); renderAll(); closeModal('modal-eq-detail'); showToast('ציוד נמחק'); }
 
 // ===================== PAYMENT =====================
-function openPaymentGeneral() {
-  const wrap = document.getElementById('pay-cust-name').parentElement;
-  wrap.innerHTML = `<label class="fl">לקוח *</label><select class="fi" id="pay-cust-sel" onchange="onPayCustChange(this.value)">${DB.customers.filter(c => c.active).map(c => `<option value="${c.id}">${c.name}</option>`).join('')}</select>`;
-  const firstCid = DB.customers.find(c => c.active)?.id;
-  if (firstCid) { activeCid = firstCid; document.getElementById('pay-balance').value = fmt(totalDebt(firstCid)); }
-  document.getElementById('pay-amount').value = '';
-  document.getElementById('pay-date').value = today();
-  document.getElementById('pay-note').value = '';
-  openModal('modal-payment');
-}
-function onPayCustChange(cid) { activeCid = cid; document.getElementById('pay-balance').value = fmt(totalDebt(cid)); }
 
 function openPaymentModal(cid) {
   activeCid = cid;

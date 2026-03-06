@@ -3,7 +3,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-  <meta name="app-version" content="202603061610">
+  <meta name="app-version" content="202603061800">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -560,35 +560,45 @@ textarea.fi { resize: none; }
   window._fbLogout = async function() { await signOut(auth); };
 
   // ── AUTH STATE ──────────────────────────────────────────────────────────
-  window.addEventListener('load', () => {
-    // Show loading overlay while checking auth
+  function _showLogin() {
+    const loadEl = document.getElementById('fb-loading');
+    const loginScreen = document.getElementById('login-screen');
+    if (loadEl) loadEl.style.display = 'none';
+    if (loginScreen) loginScreen.style.display = 'flex';
+    window._currentUser = null;
+    window.showSyncStatus && window.showSyncStatus('');
+  }
+
+  function _showApp(user) {
+    const loginScreen = document.getElementById('login-screen');
+    if (loginScreen) loginScreen.style.display = 'none';
+    window._currentUser = user;
+  }
+
+  window.addEventListener('load', async () => {
     const loadEl = document.getElementById('fb-loading');
     if (loadEl) loadEl.style.display = 'flex';
 
+    // Always sign out on page load — require explicit login every time
+    try { await signOut(auth); } catch(e) {}
+
+    // Now listen for auth changes (will immediately fire with null user → show login)
     onAuthStateChanged(auth, async user => {
-      const loginScreen = document.getElementById('login-screen');
-      if (user) {
-        const isEmail = user.providerData && user.providerData.some(p => p.providerId === 'password');
-        if (user.isAnonymous || !isEmail) {
-          await signOut(auth);
-          if (loadEl) loadEl.style.display = 'none';
-          if (loginScreen) { loginScreen.style.display = 'flex'; }
-          return;
-        }
-        // Valid user
-        window._currentUser = user;
-        if (loginScreen) loginScreen.style.display = 'none';
-        await window._fbLoad(); // shows/hides loadEl internally
-        window._fbListen();
-      } else {
-        window._currentUser = null;
-        if (loadEl) loadEl.style.display = 'none';
-        if (loginScreen) {
-          loginScreen.style.display = 'flex';
-          loginScreen.style.removeProperty('visibility');
-        }
-        window.showSyncStatus && window.showSyncStatus('');
+      if (!user) {
+        _showLogin();
+        return;
       }
+      // Validate provider
+      const isEmail = user.providerData && user.providerData.some(p => p.providerId === 'password');
+      if (user.isAnonymous || !isEmail) {
+        await signOut(auth);
+        _showLogin();
+        return;
+      }
+      // Valid email/password user — load data
+      _showApp(user);
+      await window._fbLoad();
+      window._fbListen();
     });
   });
 </script>
@@ -599,7 +609,7 @@ textarea.fi { resize: none; }
 <script>
 // Auto cache-bust — BUILD_TS is stamped at file-generation time
 (function() {
-  const BUILD_TS = '202603061610'; // auto-updated every time this file is generated
+  const BUILD_TS = '202603061800'; // auto-updated every time this file is generated
   const url = new URL(window.location.href);
   if (url.searchParams.get('v') !== BUILD_TS) {
     url.searchParams.set('v', BUILD_TS);

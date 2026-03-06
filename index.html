@@ -3,7 +3,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-  <meta name="app-version" content="202603061937">
+  <meta name="app-version" content="202603061947">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -562,7 +562,7 @@ textarea.fi { resize: none; }
 <script>
 // Auto cache-bust — BUILD_TS is stamped at file-generation time
 (function() {
-  const BUILD_TS = '202603061937'; // auto-updated every time this file is generated
+  const BUILD_TS='202603061950'; // auto-updated every time this file is generated
   const url = new URL(window.location.href);
   if (url.searchParams.get('v') !== BUILD_TS) {
     url.searchParams.set('v', BUILD_TS);
@@ -1467,8 +1467,13 @@ function saveToCloud() {
 }
 
 function loadFromCloud() {
-  if (window._fbLoad) window._fbLoad();
-  else showSyncStatus('💾 מקומי בלבד');
+  if (window._fbLoad) {
+    window._fbLoad().then(function() {
+      if (window._fbListen) window._fbListen();
+    });
+  } else {
+    showSyncStatus('💾 מקומי בלבד');
+  }
 }
 
 function showSyncStatus(msg) {
@@ -1486,7 +1491,12 @@ function updateTopSub() {
 
 // ===================== DATA =====================
 // DB proxy — allows Firebase ES module to update window.DB and main script sees it
-if (!window._DB) window._DB = { customers: [], equipment: [], payments: [], debts: [], visits: [], catalog: [] };
+// Init DB - try localStorage backup first so data survives page reload before Firebase loads
+if (!window._DB) {
+  var _backup = null;
+  try { var _raw = localStorage.getItem('crm_backup'); if (_raw) _backup = JSON.parse(_raw); } catch(e) {}
+  window._DB = _backup || { customers: [], equipment: [], payments: [], debts: [], visits: [], catalog: [] };
+}
 var DB = new Proxy(window._DB, {
   get: function(t, k) { return window._DB[k]; },
   set: function(t, k, v) { window._DB[k] = v; return true; }
@@ -1504,6 +1514,8 @@ function save() {
   if (!DB.visits) DB.visits = [];
   if (!DB.catalog) DB.catalog = [];
   DB.customers.forEach(function(c) { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
+  // localStorage as backup (data safety)
+  try { localStorage.setItem('crm_backup', JSON.stringify(window._DB)); } catch(e) {}
   saveToCloud();
 }
 function custInventory(cid) { const c = getCust(cid); return c ? (c.inventory || []) : []; }
@@ -3808,39 +3820,42 @@ function doLogin() {
     return;
   }
 
-  // Build full email
   var email = rawUser.includes('@') ? rawUser : rawUser + '@crm-manahal.com';
 
   if (btn) { btn.textContent = 'מתחבר...'; btn.disabled = true; }
   err.classList.remove('show');
 
-  // Try Firebase Auth first
-  if (window._fbLogin) {
-    window._fbLogin(email, p).then(function(errMsg) {
-      if (btn) { btn.textContent = 'כניסה למערכת ←'; btn.disabled = false; }
-      if (errMsg) {
-        err.textContent = errMsg;
+  // If Firebase module not yet loaded, wait up to 5 seconds and retry
+  if (!window._fbLogin) {
+    var waited = 0;
+    var wait = setInterval(function() {
+      waited += 200;
+      if (window._fbLogin) { clearInterval(wait); doLogin(); }
+      else if (waited >= 5000) {
+        clearInterval(wait);
+        if (btn) { btn.textContent = 'כניסה למערכת ←'; btn.disabled = false; }
+        err.textContent = 'אין חיבור לשרת — בדוק אינטרנט';
         err.classList.add('show');
-        document.getElementById('login-pass').value = '';
-        return;
       }
-      // Success — enter app
-      err.classList.remove('show');
-      document.getElementById('login-screen').style.display = 'none';
-      if (window._fbLoad) {
-        window._fbLoad().then(function() {
-          if (window._fbListen) window._fbListen();
-        });
-      }
-      renderAll();
-      checkEndOfMonthReminder();
-    });
-  } else {
-    // Fallback: Firebase module not yet loaded, wait and retry
-    if (btn) { btn.textContent = 'כניסה למערכת ←'; btn.disabled = false; }
-    err.textContent = 'מתחבר לשרת, נסה שוב';
-    err.classList.add('show');
+    }, 200);
+    return;
   }
+
+  window._fbLogin(email, p).then(function(errMsg) {
+    if (btn) { btn.textContent = 'כניסה למערכת ←'; btn.disabled = false; }
+    if (errMsg) {
+      err.textContent = errMsg;
+      err.classList.add('show');
+      document.getElementById('login-pass').value = '';
+      return;
+    }
+    // Success — hide login, load data, then render
+    err.classList.remove('show');
+    document.getElementById('login-screen').style.display = 'none';
+    loadFromCloud();
+    renderAll();
+    checkEndOfMonthReminder();
+  });
 }
 
 function doLogout() {

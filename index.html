@@ -587,7 +587,7 @@ textarea.fi { resize: none; }
         document.getElementById('login-screen').style.display = 'none';
         await window._fbLoad();
         window._fbListen();
-        window.renderAll && window.renderAll();
+        // renderAll already called inside _fbLoad after data is ready
       } else {
         // Logged out — show login screen
         window._currentUser = null;
@@ -1494,7 +1494,23 @@ function save() {
   DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
   saveToCloud();
 }
-let DB = { customers: [], equipment: [], payments: [], debts: [], visits: [], catalog: [] };
+// ── DB lives on window so the Firebase ES module can update it ──
+// All existing code uses the local `DB` variable which proxies through window._DB
+if (!window._DB) window._DB = { customers: [], equipment: [], payments: [], debts: [], visits: [], catalog: [] };
+var DB = new Proxy(window._DB, {
+  get(t, k) { return window._DB[k]; },
+  set(t, k, v) { window._DB[k] = v; return true; }
+});
+// When Firebase writes window.DB = {...}, sync back to _DB
+Object.defineProperty(window, 'DB', {
+  get() { return window._DB; },
+  set(v) {
+    // Copy all keys from new value into _DB so proxy stays valid
+    Object.keys(window._DB).forEach(k => delete window._DB[k]);
+    Object.assign(window._DB, v);
+  },
+  configurable: true
+});
 function custInventory(cid) { const c = getCust(cid); return c ? (c.inventory || []) : []; }
 function custOrders(cid) { const c = getCust(cid); return c ? (c.orders || []) : []; }
 

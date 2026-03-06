@@ -3,7 +3,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-  <meta name="app-version" content="202603061947">
+  <meta name="app-version" content="202603062003">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1293,7 +1293,7 @@ textarea.fi { resize: none; }
         </select>
       </div>
       <div class="fg"><label class="fl">מחיר מכירה ₪</label><input class="fi" id="catprod-price" type="number" placeholder="0" dir="ltr"></div>
-      <button class="btnp" id="catprod-save-btn" onclick="saveCatalogProduct()">שמור ✓</button>
+      <button class="btnp" id="catprod-save-btn">שמור ✓</button>
     </div>
   </div>
 </div>
@@ -3675,21 +3675,23 @@ function openEditCatalogProduct(pid) {
 
 function saveCatalogProduct(pid) {
   const name = document.getElementById('catprod-name').value.trim();
-  if (!name) { alert('נא להזין שם מוצר'); return; }
+  if (!name) { showToast('נא להזין שם מוצר'); return; }
   const category = document.getElementById('catprod-cat').value;
   const salePrice = Number(document.getElementById('catprod-price').value) || 0;
   if (!DB.catalog) DB.catalog = [];
-  if (pid) {
+  // pid=null or pid=undefined = new product; pid=string = edit
+  const isEdit = pid && typeof pid === 'string';
+  if (isEdit) {
     const p = DB.catalog.find(x => x.id === pid);
     if (p) { p.name = name; p.category = category; p.salePrice = salePrice; }
+    else { showToast('מוצר לא נמצא'); return; }
   } else {
-    if (DB.catalog.find(p => p.name.trim().toLowerCase() === name.toLowerCase())) {
-      alert('מוצר בשם זה כבר קיים בקטלוג'); return;
-    }
+    const dup = DB.catalog.find(p => p.name.trim().toLowerCase() === name.toLowerCase());
+    if (dup) { showToast('מוצר בשם זה כבר קיים בקטלוג'); return; }
     DB.catalog.push({ id: 'cat_' + uid(), name, category, salePrice });
   }
   save(); renderCatalogModal(); closeModal('modal-catalog-prod');
-  showToast((pid ? 'מוצר עודכן ✅' : 'מוצר נוסף לקטלוג ✅'));
+  showToast(isEdit ? 'מוצר עודכן ✅' : 'מוצר נוסף לקטלוג ✅');
 }
 
 function deleteCatalogProduct(pid) {
@@ -3849,12 +3851,19 @@ function doLogin() {
       document.getElementById('login-pass').value = '';
       return;
     }
-    // Success — hide login, load data, then render
+    // Success — hide login, then load data, THEN render
     err.classList.remove('show');
     document.getElementById('login-screen').style.display = 'none';
-    loadFromCloud();
-    renderAll();
-    checkEndOfMonthReminder();
+    if (window._fbLoad) {
+      window._fbLoad().then(function() {
+        if (window._fbListen) window._fbListen();
+        renderAll();
+        checkEndOfMonthReminder();
+      });
+    } else {
+      renderAll();
+      checkEndOfMonthReminder();
+    }
   });
 }
 

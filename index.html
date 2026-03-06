@@ -430,174 +430,147 @@ textarea.fi { resize: none; }
     appId: "1:186019003333:web:d81b309495f25ec388a9ac"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const app  = initializeApp(firebaseConfig);
+  const db   = getFirestore(app);
   const auth = getAuth(app);
 
-  // SESSION persistence — requires login every time browser/tab is closed
+  // Require login every time tab/browser is closed
   await setPersistence(auth, browserSessionPersistence).catch(() => {});
 
-  const DOC_ID = 'crm_data';
-  const COL = 'crm';
-  let _saveTimer = null;
-  let _lastSavedJson = '';   // FIX: full JSON hash instead of weak length hash
-  let _unsubscribe = null;
-  let _isSaving = false;
-  let _saveRetryCount = 0;
+  const COL = 'crm', DOC_ID = 'crm_data';
+  let _saveTimer = null, _lastJson = '', _unsubscribe = null;
+  let _saving = false, _retries = 0;
 
-  function _makeHash(data) {
-    // FIX: use actual JSON string for comparison — no false collisions
-    const j = JSON.stringify(data);
-    _makeHash._cache = j;
-    return j;
-  }
-
+  // ── SAVE ────────────────────────────────────────────────────────────────
   window._fbSave = async function(data) {
-    // Must be authenticated
-    if (!auth.currentUser) {
-      window.showSyncStatus('⚠️ לא מחובר');
-      return;
-    }
-    if (_isSaving) {
-      clearTimeout(_saveTimer);
-      _saveTimer = setTimeout(() => window._fbSave(data), 1500);
-      return;
-    }
-    const json = _makeHash(data);
-    if (json === _lastSavedJson) return;
-    _isSaving = true;
+    if (!auth.currentUser) { window.showSyncStatus && window.showSyncStatus('⚠️ לא מחובר'); return; }
+    if (_saving) { clearTimeout(_saveTimer); _saveTimer = setTimeout(() => window._fbSave(data), 1500); return; }
+    const json = JSON.stringify(data);
+    if (json === _lastJson) return;
+    _saving = true;
     try {
       await setDoc(doc(db, COL, DOC_ID), { data: json, updated: Date.now() });
-      _lastSavedJson = json;
-      _saveRetryCount = 0;
-      window.showSyncStatus('☁️ נשמר');
+      _lastJson = json;
+      _retries = 0;
+      window.showSyncStatus && window.showSyncStatus('☁️ נשמר');
     } catch(e) {
-      console.error('Firebase save error:', e.code, e.message);
-      _saveRetryCount++;
+      console.error('save error:', e.code, e.message);
+      _retries++;
       if (e.code === 'permission-denied') {
-        window.showSyncStatus('⚠️ אין הרשאה — בדוק Rules');
+        window.showSyncStatus && window.showSyncStatus('⚠️ אין הרשאה');
+      } else if (_retries <= 3) {
+        window.showSyncStatus && window.showSyncStatus('⚠️ מנסה שוב...');
+        setTimeout(() => window._fbSave(data), 2000 * _retries);
       } else {
-        window.showSyncStatus('⚠️ שגיאת שמירה');
-        if (_saveRetryCount <= 3) setTimeout(() => window._fbSave(data), 2000 * _saveRetryCount);
-        else { _saveRetryCount = 0; window.showSyncStatus('⚠️ שמירה נכשלה'); }
+        _retries = 0;
+        window.showSyncStatus && window.showSyncStatus('⚠️ שמירה נכשלה');
       }
-    } finally {
-      _isSaving = false;
-    }
+    } finally { _saving = false; }
   };
 
   window._fbScheduleSave = function(data) {
     clearTimeout(_saveTimer);
-    window.showSyncStatus('...');
-    _saveTimer = setTimeout(() => window._fbSave(data), 800); // slightly faster
+    window.showSyncStatus && window.showSyncStatus('...');
+    _saveTimer = setTimeout(() => window._fbSave(data), 800);
   };
 
+  // ── LOAD ────────────────────────────────────────────────────────────────
   window._fbLoad = async function() {
-    if (!auth.currentUser) { window.showSyncStatus('⚠️ לא מחובר'); return; }
-    const loadingEl = document.getElementById('fb-loading');
-    if (loadingEl) loadingEl.style.display = 'flex';
+    if (!auth.currentUser) { window.showSyncStatus && window.showSyncStatus('⚠️ לא מחובר'); return; }
+    const loadEl = document.getElementById('fb-loading');
+    if (loadEl) loadEl.style.display = 'flex';
     try {
-      window.showSyncStatus('🔄 טוען...');
+      window.showSyncStatus && window.showSyncStatus('🔄 טוען...');
       const snap = await getDoc(doc(db, COL, DOC_ID));
       if (snap.exists()) {
         const json = snap.data().data;
         const parsed = JSON.parse(json);
-        window.DB = { customers: [], equipment: [], payments: [], debts: [], visits: [], catalog: [], ...parsed };
-        if (!window.DB.catalog) window.DB.catalog = [];
-        window.DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
-        _lastSavedJson = json;  // FIX: seed hash from loaded data so first save isn't skipped
-        window.renderAll && window.renderAll();
-        window.showSyncStatus('✅ מסונכרן (' + (window.DB.customers || []).length + ' לקוחות)');
+        // Update DB via window.DB setter (Proxy)
+        window.DB = { customers:[], equipment:[], payments:[], debts:[], visits:[], catalog:[], ...parsed };
+        if (!window._DB.catalog) window._DB.catalog = [];
+        window._DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
+        _lastJson = json;
+        window.showSyncStatus && window.showSyncStatus('✅ מסונכרן (' + (window._DB.customers||[]).length + ' לקוחות)');
       } else {
-        // First run — push empty DB
-        _lastSavedJson = '';
-        await window._fbSave(window.DB);
-        window.renderAll && window.renderAll();
-        window.showSyncStatus('☁️ מוכן');
+        // First time — save empty DB
+        _lastJson = '';
+        await window._fbSave(window._DB);
+        window.showSyncStatus && window.showSyncStatus('☁️ מוכן');
       }
+      window.renderAll && window.renderAll();
     } catch(e) {
-      console.error('Firebase load error:', e);
-      window.showSyncStatus('⚠️ אין חיבור לענן');
-      const errEl = document.getElementById('fb-loading-err');
-      if (errEl) { errEl.style.display = 'block'; errEl.textContent = '⚠️ לא ניתן להתחבר ל-Firebase. בדוק חיבור אינטרנט.'; }
+      console.error('load error:', e.code, e.message);
+      window.showSyncStatus && window.showSyncStatus('⚠️ שגיאה: ' + (e.code || e.message));
     } finally {
-      if (loadingEl) loadingEl.style.display = 'none';
+      if (loadEl) loadEl.style.display = 'none';
     }
   };
 
-  // Real-time listener — sync changes from other devices
+  // ── REALTIME LISTENER ───────────────────────────────────────────────────
   window._fbListen = function() {
     if (_unsubscribe) _unsubscribe();
-    _unsubscribe = onSnapshot(doc(db, COL, DOC_ID), (snap) => {
-      if (!snap.exists()) return;
-      if (_isSaving) return; // we're mid-save, ignore echo
+    _unsubscribe = onSnapshot(doc(db, COL, DOC_ID), snap => {
+      if (!snap.exists() || _saving) return;
       try {
-        const remoteJson = snap.data().data;
-        if (remoteJson === _lastSavedJson) return; // our own save echoed back, ignore
-        const remote = JSON.parse(remoteJson);
-        window.DB = { customers: [], equipment: [], payments: [], debts: [], visits: [], catalog: [], ...remote };
-        if (!window.DB.catalog) window.DB.catalog = [];
-        window.DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
-        _lastSavedJson = remoteJson; // update so we don't re-apply this
+        const json = snap.data().data;
+        if (json === _lastJson) return;
+        const remote = JSON.parse(json);
+        window.DB = { customers:[], equipment:[], payments:[], debts:[], visits:[], catalog:[], ...remote };
+        if (!window._DB.catalog) window._DB.catalog = [];
+        window._DB.customers.forEach(c => { if (!c.inventory) c.inventory = []; if (!c.orders) c.orders = []; });
+        _lastJson = json;
         window.renderAll && window.renderAll();
-        window.showSyncStatus('🔄 עודכן ממכשיר אחר');
-        setTimeout(() => window.showSyncStatus('✅ מסונכרן'), 2000);
-      } catch(e) { console.error('listener parse error', e); }
-    }, (err) => {
-      console.error('Firebase listener error:', err);
-      window.showSyncStatus('⚠️ בעיית חיבור');
+        window.showSyncStatus && window.showSyncStatus('🔄 עודכן ממכשיר אחר');
+        setTimeout(() => window.showSyncStatus && window.showSyncStatus('✅ מסונכרן'), 2000);
+      } catch(e) { console.error('listener error:', e); }
+    }, err => {
+      console.error('listener error:', err.code);
+      window.showSyncStatus && window.showSyncStatus('⚠️ ' + err.code);
     });
   };
 
-  // ── Auth functions ──────────────────────────────────────────────────
+  // ── LOGIN / LOGOUT ──────────────────────────────────────────────────────
   window._fbLogin = async function(email, password) {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged will handle the rest
+      return null; // success — onAuthStateChanged handles the rest
     } catch(e) {
-      const code = e.code || '';
-      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
-        return 'שם משתמש או סיסמה שגויים';
-      } else if (code === 'auth/too-many-requests') {
-        return 'יותר מדי ניסיונות — נסה שוב מאוחר יותר';
-      } else if (code === 'auth/network-request-failed') {
-        return 'אין חיבור לאינטרנט';
-      }
-      return 'שגיאת כניסה: ' + code;
+      const c = e.code || '';
+      if (c.includes('user-not-found') || c.includes('wrong-password') || c.includes('invalid-credential') || c.includes('invalid-email')) return 'אימייל או סיסמה שגויים';
+      if (c.includes('too-many-requests')) return 'יותר מדי ניסיונות — נסה שוב מאוחר יותר';
+      if (c.includes('network')) return 'אין חיבור לאינטרנט';
+      return 'שגיאת כניסה (' + c + ')';
     }
-    return null;
   };
 
-  window._fbLogout = async function() {
-    await signOut(auth);
-  };
+  window._fbLogout = async function() { await signOut(auth); };
 
-  // ── Auth state listener ──────────────────────────────────────────────
+  // ── AUTH STATE ──────────────────────────────────────────────────────────
   window.addEventListener('load', () => {
-    onAuthStateChanged(auth, async (user) => {
+    // Show loading overlay while checking auth
+    const loadEl = document.getElementById('fb-loading');
+    if (loadEl) loadEl.style.display = 'flex';
+
+    onAuthStateChanged(auth, async user => {
+      const loginScreen = document.getElementById('login-screen');
       if (user) {
-        // Block anonymous logins and non-email providers
-        const isEmailProvider = user.providerData && user.providerData.some(p => p.providerId === 'password');
-        if (user.isAnonymous || !isEmailProvider) {
+        const isEmail = user.providerData && user.providerData.some(p => p.providerId === 'password');
+        if (user.isAnonymous || !isEmail) {
           await signOut(auth);
-          window._currentUser = null;
-          document.getElementById('login-screen').style.display = 'flex';
-          window.showSyncStatus('');
-          const err = document.getElementById('login-err');
-          if (err) { err.textContent = 'כניסה עם אימייל וסיסמה בלבד'; err.classList.add('show'); }
+          if (loadEl) loadEl.style.display = 'none';
+          if (loginScreen) loginScreen.style.display = 'flex';
           return;
         }
-        // Valid email/password login — load data and show app
+        // Valid user
         window._currentUser = user;
-        document.getElementById('login-screen').style.display = 'none';
-        await window._fbLoad();
+        if (loginScreen) loginScreen.style.display = 'none';
+        await window._fbLoad(); // shows/hides loadEl internally
         window._fbListen();
-        // renderAll already called inside _fbLoad after data is ready
       } else {
-        // Logged out — show login screen
         window._currentUser = null;
-        document.getElementById('login-screen').style.display = 'flex';
-        window.showSyncStatus('');
+        if (loadEl) loadEl.style.display = 'none';
+        if (loginScreen) loginScreen.style.display = 'flex';
+        window.showSyncStatus && window.showSyncStatus('');
       }
     });
   });
@@ -633,7 +606,7 @@ textarea.fi { resize: none; }
 
 <!-- LOGIN SCREEN -->
 
-<div id="login-screen">
+<div id="login-screen" style="display:none">
   <div style="position:absolute;top:40px;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(59,130,246,.15),transparent 70%);pointer-events:none"></div>
   <div class="login-logo">❄️</div>
   <div class="login-title">CRM קפואים</div>

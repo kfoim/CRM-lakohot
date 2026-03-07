@@ -3,7 +3,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-  <meta name="app-version" content="202603062003">
+  <meta name="app-version" content="202603062115">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -559,17 +559,7 @@ textarea.fi { resize: none; }
 </head>
 <body>
 
-<script>
-// Auto cache-bust — BUILD_TS is stamped at file-generation time
-(function() {
-  const BUILD_TS='202603061950'; // auto-updated every time this file is generated
-  const url = new URL(window.location.href);
-  if (url.searchParams.get('v') !== BUILD_TS) {
-    url.searchParams.set('v', BUILD_TS);
-    window.location.replace(url.toString());
-  }
-})();
-</script>
+<!-- version: 202603062114 -->
 
 <!-- Firebase loading overlay -->
 
@@ -1501,14 +1491,19 @@ var DB = new Proxy(window._DB, {
   get: function(t, k) { return window._DB[k]; },
   set: function(t, k, v) { window._DB[k] = v; return true; }
 });
-Object.defineProperty(window, 'DB', {
-  get: function() { return window._DB; },
-  set: function(v) {
-    Object.keys(window._DB).forEach(function(k) { delete window._DB[k]; });
-    Object.assign(window._DB, v);
-  },
-  configurable: true
-});
+try {
+  Object.defineProperty(window, 'DB', {
+    get: function() { return window._DB; },
+    set: function(v) {
+      Object.keys(window._DB).forEach(function(k) { delete window._DB[k]; });
+      Object.assign(window._DB, v);
+    },
+    configurable: true
+  });
+} catch(e) {
+  // Property already defined (e.g. hot-reload) — just update _DB directly
+  console.warn('DB property already defined, using direct assignment');
+}
 
 function save() {
   if (!DB.visits) DB.visits = [];
@@ -1520,6 +1515,10 @@ function save() {
 }
 function custInventory(cid) { const c = getCust(cid); return c ? (c.inventory || []) : []; }
 function custOrders(cid) { const c = getCust(cid); return c ? (c.orders || []) : []; }
+
+// Category constants — declared early so all render functions can use them
+var catIcons = { icecream: '🍦', vegetables: '🥦', dough: '🥐', fruit: '🍓', other: '📦' };
+var catNames = { icecream: 'גלידות', vegetables: 'ירקות', dough: 'בצק', fruit: 'פירות', other: 'אחר' };
 
 // ===================== UTILS =====================
 function uid() { return '_' + Math.random().toString(36).substr(2, 9); }
@@ -1670,6 +1669,7 @@ function custCardHtml(c, i) {
 
 // ===================== RENDER CUSTOMERS =====================
 function renderCustomers() {
+  if (!curTab) return;
   const q = (document.getElementById('cust-search')?.value || '').toLowerCase();
   let list = DB.customers.filter(c => c.active);
   if (q) list = list.filter(c => c.name.toLowerCase().includes(q) || (c.contact || '').toLowerCase().includes(q) || (c.phone || '').includes(q));
@@ -1845,8 +1845,7 @@ function renderInventory() {
     : '<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">אין מלאי מוגדר</div><div class="empty-sub">פתח לקוח והוסף מוצרים ממסך הלקוח</div></div>';
 }
 
-const catIcons = { icecream: '🍦', vegetables: '🥦', dough: '🥐', fruit: '🍓', other: '📦' };
-const catNames = { icecream: 'גלידות', vegetables: 'ירקות', dough: 'בצק', fruit: 'פירות', other: 'אחר' };
+// catIcons/catNames moved to top of DATA section
 
 // Per-customer inventory management
 function openCustInvItem(cid, iid) {
@@ -3905,6 +3904,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===================== RENDER ALL =====================
 function renderAll() {
+  if (!curPage || !curTab) return;
   renderDashboard();
   if (curPage === 'cust') renderCustomers();
   if (curPage === 'eq') renderEquipment();
